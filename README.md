@@ -4,8 +4,8 @@ UrdfSim is a fork of the [AirSim simulator](https://github.com/Microsoft/AirSim)
 
 Here are some examples of bots that can be built inside of AirSim-URDF:
 
-![LunabotPicture](docs/images/UrdfLunabot.PNG)
-![ArmPicture](docs/images/UrdfArm.PNG)
+![LunabotPicture](docs/images/Lunabot.gif)
+![ArmPicture](docs/images/Arm.gif)
 
 ## How to Get It
 
