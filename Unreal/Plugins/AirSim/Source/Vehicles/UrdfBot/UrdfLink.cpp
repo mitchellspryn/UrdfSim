@@ -51,28 +51,10 @@ void AUrdfLink::Tick(float delta)
     this->UpdateKinematics(delta);
 }
 
-//void AUrdfLink::TickComponent(float deltaTime, ELevelTick tickType, FActorComponentTickFunction* thisTickFunction)
-//{
-//    //Super::TickComponent(deltaTime, tickType, thisTickFunction);
-//}
+
 
 void AUrdfLink::TickPostPhysics(float deltaSeconds, ELevelTick tickType, FAUrdfLinkSecondaryTickFunction& thisTickFunction)
 {
-    //// Non-player update.
-    //const bool bShouldTick =
-    //    ((tickType != LEVELTICK_ViewportsOnly) || this->owner_->ShouldTickIfViewportsOnly());
-    //if (bShouldTick)
-    //{
-    //    if (!IsPendingKill() && GetWorld())
-    //    {
-    //        if (this->owner_->GetWorldSettings() != NULL && !IsRunningDedicatedServer())
-    //        {
-    //            // Here your post physics tick stuff
-    //            //if (owner->bEnableLogging)
-    //            //	UE_LOG(LogClass, Log, TEXT("%d URStaticMeshComponent::TickPostPhysics DeltaTime: %f, Z: %f"), FrameCount, DeltaSeconds, GetCurrentLocation().Z);
-    //        }
-    //    }
-    //}
 }
 
 void AUrdfLink::NotifyHit(class UPrimitiveComponent* myComp, class AActor* other, class UPrimitiveComponent* otherComp, bool bSelfMoved, FVector hitLocation,
@@ -113,7 +95,6 @@ void AUrdfLink::SetReferenceFrameLocation(FVector &translation, FRotator &rotati
 
 void AUrdfLink::RecordVisualOffset(FVector &translation, FRotator &rotation)
 {
-    // TODO: This restricts us to only working with rigid body links
     this->visualOffsetTranslation_ = translation;
     this->visualOffsetRotation_ = rotation;
 }
@@ -180,8 +161,6 @@ void AUrdfLink::ComputeForces(float deltaTime, bool inSubstep)
     for (auto kvp : this->forceSpecifications_)
     {
         UrdfForceSpecification* force = kvp.Value;
-        //float magnitude = this->lastSetMagnitudes_[kvp.Key];
-        //float dMag = force->Magnitude - magnitude;
 
         FRotator thisRotation = FRotator::ZeroRotator;
         FVector worldAxis = FVector::ZeroVector;
@@ -205,25 +184,6 @@ void AUrdfLink::ComputeForces(float deltaTime, bool inSubstep)
 
     this->ReleaseForceLock();
 
-    // TODO: This if statement is only activated if we are tracking a physx body. 
-    // But, we aren't.
-    /*if (PRigidBody)
-    {
-        float CurrError = GetCurrentLocation().Z - StartH;
-
-        float Velocity = GetCurrentVelocity().Z;
-
-        float force = -(CurrError * owner->KSpring + Velocity * owner->Damping);
-
-        if (InSubstep)
-        {
-            PRigidBody->addForce(PxVec3(0.0f, 0.0f, force), physx::PxForceMode::eFORCE, true);
-        }
-        else
-        {
-            AddForce(FVector(0.0f, 0.0f, force));
-        }
-    }*/
 }
 
 void AUrdfLink::SetOwningActor(AUrdfBotPawn* owner)
@@ -270,7 +230,6 @@ msr::airlib::Pose AUrdfLink::GetPose()
     auto airPosition = msr::airlib::Vector3r(position.X, position.Y, position.Z);
     auto airRotation = msr::airlib::Quaternionr(rotation.W, rotation.X, rotation.Y, rotation.Z);
     
-    // TODO: Do we need to tranform to NED?
     return msr::airlib::Pose(airPosition, airRotation);
 }
 
@@ -305,18 +264,6 @@ void AUrdfLink::SetMeshFromProceduralMeshComponent(UProceduralMeshComponent* pro
 
 void AUrdfLink::InitPostSetMesh()
 {
-    //this->mesh_root_.PrimaryComponentTick.TickGroup = TG_PrePhysics;
-    //PrimaryComponentTick.bCanEverTick = true;
-    //PrimaryComponentTick.bStartWithTickEnabled = true;
-
-    //this->secondaryComponentTick_.TickGroup = TG_PostPhysics;
-    //this->secondaryComponentTick_.bCanEverTick = true;
-    //this->secondaryComponentTick_.bStartWithTickEnabled = true;
-
-    //this->PrimaryActorTick.TickGroup = TG_PrePhysics;
-    //this->PrimaryActorTick.bCanEverTick = true;
-    //this->PrimaryActorTick.bStartWithTickEnabled = true;
-
     this->onCalculateCustomPhysics.BindUObject(this, &AUrdfLink::SubstepTick);
 
     this->forceSpecifications_.Empty();

@@ -29,7 +29,7 @@
 class StaticMeshGenerator
 {
     public:
-        bool Initialize(UStaticMesh* boxTemplateMesh, UStaticMesh* cylinderTemplateMesh, UStaticMesh* sphereTemplateMesh);
+        bool Initialize(UStaticMesh* boxTemplateMesh, UStaticMesh* cylinderTemplateMesh, UStaticMesh* sphereTemplateMesh, TMap<FString, UStaticMesh*> unrealMeshes);
         bool CreateUnscaledMeshForLink(FString linkName, UrdfGeometry* visualGeometry, UrdfGeometry* collisionGeometry, APawn* outer, AUrdfLink* link);
 
     private:
@@ -130,6 +130,7 @@ class StaticMeshGenerator
         UStaticMesh* boxTemplateMesh_;
         UStaticMesh* cylinderTemplateMesh_;
         UStaticMesh* sphereTemplateMesh_;
+        TMap<FString, UStaticMesh*> unrealMeshes_;
 
         void GenerateBspCollisionMesh(ProceduralMeshSpecification& meshSpecification, UModel* model);
         TArray<TArray<FVector>> CreateCollisionVAHCD(TArray<FVector> stlPoints, TArray<uint32> stlIndices, double concavity, unsigned int resolution, unsigned int maxNumVerticiesPerCH, double minVolumePerCh);

@@ -121,6 +121,9 @@ class AUrdfBotPawn : public APawn, public IAirSimVehicle
         TMap<FString, UMaterial*> materials_;
 
         UPROPERTY()
+        TMap<FString, UStaticMesh*> user_static_meshes_;
+
+        UPROPERTY()
         TMap<FString, UStaticMesh*> procedural_mesh_cache_;
 
         TMap<FString, TArray<FRegexPattern>> collision_blacklist_;

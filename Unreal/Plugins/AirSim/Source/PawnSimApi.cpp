@@ -123,7 +123,9 @@ void PawnSimApi::createCamerasFromSettings()
         params_.vehicle->GetComponentReferenceTransform(componentName, componentTranslation, componentRotation);
 
         // TODO: Other pawns are using localNED. Is this OK?
-        FVector position = FVector(setting.position.x(), setting.position.y(), setting.position.z());
+        FVector localPositionOffset = FVector(setting.position.x(), setting.position.y(), setting.position.z());
+        FVector worldPositionOffset = componentRotation.UnrotateVector(localPositionOffset);
+        FVector position = worldPositionOffset + componentTranslation;
         FTransform camera_transform(FRotator(setting.rotation.pitch, setting.rotation.yaw, setting.rotation.roll) + componentRotation,
             position, FVector(1., 1., 1.));
 
@@ -131,7 +133,7 @@ void PawnSimApi::createCamerasFromSettings()
         APIPCamera* camera = params_.vehicle->GetPawn()->GetWorld()->SpawnActor<APIPCamera>(params_.pip_camera_class, camera_transform, camera_spawn_params);
         camera->setIndex(camera_index);
         camera_index++;
-        camera->AttachToComponent(attachComponent, FAttachmentTransformRules::KeepRelativeTransform);
+        camera->AttachToComponent(attachComponent, FAttachmentTransformRules::KeepWorldTransform);
 
         //add on to our collection
         cameras_.insert_or_assign(camera_setting_pair.first, camera);

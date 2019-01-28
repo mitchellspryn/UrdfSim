@@ -16,6 +16,13 @@ ASimHUD::ASimHUD()
 {
     static ConstructorHelpers::FClassFinder<UUserWidget> hud_widget_class(TEXT("WidgetBlueprint'/AirSim/Blueprints/BP_SimHUDWidget'"));
     widget_class_ = hud_widget_class.Succeeded() ? hud_widget_class.Class : nullptr;
+
+    // Allow access to settings in constructor
+    std::string settingsText;
+    if (getSettingsText(settingsText))
+        AirSimSettings::initializeSettings(settingsText);
+    else
+        AirSimSettings::createDefaultSettingsFile();
 }
 
 void ASimHUD::BeginPlay()

@@ -15,7 +15,6 @@ AUrdfBotPawn::AUrdfBotPawn()
     if (baseSphereMesh.Succeeded())
         this->baseSphereMesh_ = baseSphereMesh.Object;
 
-    this->staticMeshGenerator_.Initialize(this->baseBoxMesh_, this->baseCylinderMesh_, this->baseSphereMesh_);
 
     // Create a default root component. Needed for spawning to work properly.
     auto DefaultCapsule = CreateDefaultSubobject<UCapsuleComponent>(FName("Default"));
@@ -26,7 +25,7 @@ AUrdfBotPawn::AUrdfBotPawn()
     DefaultCapsule->SetVisibility(false);
     RootComponent = DefaultCapsule;
 
-    // Parse the URDF file to get a list of materials.
+    // Parse the URDF file to get a list of materials and static meshes.
     // These can only be created in the constructor as far as I can tell. 
     // Cache them for use later.
     //
@@ -60,14 +59,45 @@ AUrdfBotPawn::AUrdfBotPawn()
 
                 if (material.Object != NULL)
                 {
-                    this->materials_.Add(materialName, (UMaterial*)material.Object);
+                    this->materials_.Add(materialName, static_cast<UMaterial*>(material.Object));
                 }
             }
         }
-    }
-    catch (...)
-    {
 
+        this->user_static_meshes_.Empty();
+        for (auto kvp : parser.GetLinks())
+        {
+            UrdfMesh* linkGeometry = nullptr;
+            UrdfLinkVisualSpecification* visualSpecification = kvp.Value->VisualSpecification;
+            UrdfLinkCollisionSpecification* collisionSpecification = kvp.Value->CollisionSpecification;
+
+            if (visualSpecification != nullptr && visualSpecification->Geometry->GetGeometryType() == MESH)
+            {
+                linkGeometry = static_cast<UrdfMesh*>(visualSpecification->Geometry);
+            }
+            else if (collisionSpecification != nullptr && collisionSpecification->Geometry->GetGeometryType() == MESH)
+            {
+                linkGeometry = static_cast<UrdfMesh*>(visualSpecification->Geometry);
+            }
+
+            if (linkGeometry == nullptr || linkGeometry->FileType != UNREAL_MESH)
+            {
+                continue;
+            }
+
+            ConstructorHelpers::FObjectFinder<UStaticMesh> mesh(*linkGeometry->FileLocation);
+
+            if (mesh.Object != NULL)
+            {
+                this->user_static_meshes_.Add(linkGeometry->FileLocation, static_cast<UStaticMesh*>(mesh.Object));
+            }
+        }
+
+        this->staticMeshGenerator_.Initialize(this->baseBoxMesh_, this->baseCylinderMesh_, this->baseSphereMesh_, this->user_static_meshes_);
+    }
+    catch (std::exception e)
+    {
+        int j = 0;
     }
 }
 
@@ -104,15 +134,28 @@ void AUrdfBotPawn::Tick(float delta)
 
 void AUrdfBotPawn::EndPlay(const EEndPlayReason::Type endPlayReason)
 {
-    // TODO: Once cameras are supported, set them all to nullptr.
 }
 
 void AUrdfBotPawn::NotifyHit(class UPrimitiveComponent* myComp, class AActor* other, class UPrimitiveComponent* otherComp, bool bSelfMoved, FVector hitLocation,
     FVector hitNormal, FVector normalImpulse, const FHitResult &hit)
 {
-
     //myComp is the hit link
     //other is the actor that is being hit
+
+    if (!IsValid(myComp))
+    {
+        return;
+    }
+
+    if (!IsValid(other))
+    {
+        return;
+    }
+
+    if (!IsValid(otherComp))
+    {
+        return;
+    }
 
     FString meshCompName = myComp->GetName();
     FString otherCompName = other->GetName();
@@ -316,12 +359,7 @@ AUrdfLink* AUrdfBotPawn::CreateLinkFromSpecification(const UrdfLinkSpecification
         link->SetMaterial(this->materials_[linkSpecification.VisualSpecification->MaterialName]);
     }
 
-    //link->GetBodyInstance()->SetMassOverride(linkSpecification.InertialSpecification->Mass, true);
-    //link->SetMassOverrideInKg(NAME_None, linkSpecification.InertialSpecification->Mass, true);
     link->SetMass(linkSpecification.InertialSpecification->Mass);
-    //link->RegisterComponent();
-    //this->AddOwnedComponent(link);
-
     link->SetOwningActor(this);
 
     return link;
@@ -359,24 +397,11 @@ void AUrdfBotPawn::AttachChildren(AUrdfLink* parentLink, const UrdfLinkSpecifica
     childLink->SetActorLocationAndRotation(referenceTranslation + visualOffsetVector, referenceRotation + visualOffsetRotator);
     childLink->RecordVisualOffset(visualOffsetVector, visualOffsetRotator);
 
-    //childLink->WeldTo(parentLink);
-
-    if (childCollisionComponent != nullptr)
-    {
-        //childLink->WeldTo(childCollisionComponent);
-    }
-
-    // If required, move child component to set up the physics constraint
-    FVector inverseTransform = this->MoveChildLinkForLimitedXAxisMotion(parentLink, childLink, *jointSpecification);
-
     // Create constraint component
     UPhysicsConstraintComponent* constraint = NewObject<UPhysicsConstraintComponent>((USceneComponent*)parentLink, FName(*(parentLinkSpecification.Name + FString(TEXT("_")) + childLinkSpecification.Name)));
     FConstraintInstance constraintInstance = this->CreateConstraint(*jointSpecification);
 
     constraint->ConstraintInstance = constraintInstance;
-
-    // Record halfway point, if child was moved.
-    //constraint->SetWorldLocation(childLink->GetComponentLocation(), false, nullptr, ETeleportType::TeleportPhysics);
 
     FRotator rotation = FRotator::ZeroRotator;
     if (jointSpecification->Type != FIXED_TYPE)
@@ -386,20 +411,18 @@ void AUrdfBotPawn::AttachChildren(AUrdfLink* parentLink, const UrdfLinkSpecifica
             int j = 0;
         }
 
-        //rotation += parentReferenceRotation;
-
         // Rotate such that the local X axis aligns with the specified axis
         FVector unitX(1, 0, 0);
         FVector unitY(0, 1, 0);
         FVector unitZ(0, 0, 1);
 
         FRotator jointAxisRotator(FMath::RadiansToDegrees(jointSpecification->RollPitchYaw.Pitch), FMath::RadiansToDegrees(jointSpecification->RollPitchYaw.Yaw), FMath::RadiansToDegrees(jointSpecification->RollPitchYaw.Roll));
-        //FVector jointAxisInParentFrame = parentReferenceRotation.RotateVector(jointSpecification->Axis);
-        FVector jointAxis = jointAxisRotator.RotateVector(/*jointAxisInParentFrame*/jointSpecification->Axis);
+        FVector jointAxisInParentFrame = parentReferenceRotation.RotateVector(jointSpecification->Axis);
+        FVector jointAxis = jointAxisRotator.RotateVector(jointAxisInParentFrame);
         FVector planeToParentRotAxis = unitX ^ jointAxis;
         if (planeToParentRotAxis.Normalize())
         {
-            float rotRad = acosf(FVector::DotProduct(unitX, jointSpecification->Axis));
+            float rotRad = acosf(FVector::DotProduct(unitX, jointAxisInParentFrame));
             FQuat rotQuat(planeToParentRotAxis, rotRad);
             FRotator rotRot = rotQuat.Rotator();
             rotation += rotRot;
@@ -418,49 +441,23 @@ void AUrdfBotPawn::AttachChildren(AUrdfLink* parentLink, const UrdfLinkSpecifica
         if (jointSpecification->Type == REVOLUTE_TYPE)
         {
             float medianPosition = FMath::RadiansToDegrees((jointSpecification->Limit->Upper + jointSpecification->Limit->Lower) * 0.5f);
-            //FVector rotationAxis(1, 0, 0);
-            //FVector rotationAxisLocal = rotation.RotateVector(rotationAxis);
-            //FQuat rotationToMedian(rotationAxisLocal, medianPosition);
-            //FRotator rotationToMedianRotator = rotationToMedian.Rotator();
-            //rotation += rotationToMedianRotator;
             constraint->ConstraintInstance.AngularRotationOffset = FRotator(0, 0, medianPosition);
         }
-
-        //// For joints where it matters, align the X axis along the axis of rotation / translation
-        //if (jointSpecification->Type == PRISMATIC_TYPE || jointSpecification->Type == REVOLUTE_TYPE || jointSpecification->Type == CONTINUOUS_TYPE)
-        //{
-        //    FRotator axisRotator = jointSpecification->Axis.Rotation();
-        //    rotation += axisRotator;
-        //}
-
-        //// For revolute joints, rotate the joint so that the center of the joint aligns to the zero point
-        //if (jointSpecification->Type == REVOLUTE_TYPE)
-        //{
-        //    float medianPosition = (jointSpecification->Limit->Upper + jointSpecification->Limit->Lower) * 0.5f;
-        //    FQuat rotationToMedian(FVector(1, 0, 0), medianPosition);
-        //    FRotator rotationToMedianRotator = rotationToMedian.Rotator();
-        //    rotation += rotationToMedianRotator;
-        //}
 
         constraint->SetWorldRotation(rotation, false, nullptr, ETeleportType::TeleportPhysics);
     }
 
-    FQuat rotQuat = rotation.Quaternion();
-    FQuat cRotQuat = constraint->GetComponentQuat();
-
-    //constraint->SetWorldLocation(parentLink->GetComponentLocation());
+    // If required, move child component to set up the physics constraint
+    FVector inverseTransform = this->MoveChildLinkForLimitedXAxisMotion(parentLink, childLink, *jointSpecification);
 
     constraint->SetDisableCollision(true);
-    //constraint->AttachToComponent(parentLink, FAttachmentTransformRules(EAttachmentRule::KeepRelative, false));
-    constraint->AttachToComponent(parentLink->GetRootComponent(), FAttachmentTransformRules(EAttachmentRule::KeepRelative, false));
+
+    constraint->SetWorldLocation(childLink->GetActorLocation());
+
+    constraint->AttachToComponent(parentLink->GetRootComponent(), FAttachmentTransformRules(EAttachmentRule::KeepWorld, (jointSpecification->Type == FIXED_TYPE)));
 
     constraint->ConstraintActor1 = this;
     constraint->ConstraintActor2 = this;
-    //constraint->ConstraintActor1 = parentLink;
-    //constraint->ConstraintActor1 = childLink;
-
-    // Observation: removing this causes the world to explode
-    constraint->SetWorldLocation(childLink->GetActorLocation());
 
     constraint->SetConstrainedComponents(parentLink->GetRootMesh(), NAME_None, childLink->GetRootMesh(), NAME_None);
 
@@ -473,7 +470,9 @@ void AUrdfBotPawn::AttachChildren(AUrdfLink* parentLink, const UrdfLinkSpecifica
     }
 
     // Reset Child if needed
-    childLink->SetActorLocation(childLink->GetActorLocation() + inverseTransform, false, nullptr, ETeleportType::TeleportPhysics);
+    FVector cl = childLink->GetActorLocation();
+    childLink->SetActorLocation(cl + inverseTransform, false, nullptr, ETeleportType::TeleportPhysics);
+    FVector cl2 = childLink->GetActorLocation();
 
     //Attach all of the child node's children
     if (!this->component_visited_as_constraint_parent_[childLinkSpecification.Name])
@@ -519,7 +518,6 @@ FConstraintInstance AUrdfBotPawn::CreateConstraint(const UrdfJointSpecification 
             constraintInstance.SetLinearDriveParams(0, 0, 0);
             constraintInstance.SetLinearPositionDrive(false, false, false);
         }
-        // TODO: Damping?
         break;
     case REVOLUTE_TYPE:
         range = FMath::RadiansToDegrees(jointSpecification.Limit->Upper - jointSpecification.Limit->Lower) * 0.5f;
@@ -548,10 +546,11 @@ FConstraintInstance AUrdfBotPawn::CreateConstraint(const UrdfJointSpecification 
             constraintInstance.SetAngularDriveParams(0, 0, 0);
         }
         break;
-    case PLANAR_TYPE: // TODO: This is totally wrong
-        constraintInstance.SetAngularSwing1Limit(EAngularConstraintMotion::ACM_Free, 0);
-        constraintInstance.SetAngularSwing2Limit(EAngularConstraintMotion::ACM_Free, 0);
-        constraintInstance.SetAngularTwistLimit(EAngularConstraintMotion::ACM_Locked, 0);
+    case PLANAR_TYPE:
+        range = (jointSpecification.Limit->Upper - jointSpecification.Limit->Lower) * this->world_scale_ * 0.5f;
+        constraintInstance.SetLinearXLimit(ELinearConstraintMotion::LCM_Limited, range);
+        constraintInstance.SetLinearYLimit(ELinearConstraintMotion::LCM_Limited, range);
+        constraintInstance.SetLinearZLimit(ELinearConstraintMotion::LCM_Locked, 0);
         break;
     }
 
@@ -579,7 +578,6 @@ void AUrdfBotPawn::ResizeLink(AUrdfLink* link, UrdfGeometry* geometry)
         resizeSpec = FVector(sphereSpecification->Radius * 2.0f, sphereSpecification->Radius * 2.0f, sphereSpecification->Radius * 2.0f);
         break;
     case MESH:
-        //throw new std::runtime_error("Mesh not supported yet.");
         resizeSpec = FVector(1, 1, 1);
         break;
     default:
@@ -657,19 +655,17 @@ FVector AUrdfBotPawn::MoveChildLinkForLimitedXAxisMotion(AUrdfLink* parentLink, 
         throw std::runtime_error("Joint '" + jointName + "' has a lower of '" + lower + "', which is >= the upper of '" + upper + "'.");
     }
 
-    FVector parentLocation;
-    FVector childLocation;
-    FRotator parentRotation;
-    FRotator childRotation;
-    parentLink->GetReferenceFrameLocation(parentLocation, parentRotation);
-    childLink->GetReferenceFrameLocation(childLocation, childRotation);
+    FVector parentLocation = parentLink->GetActorLocation();
+    FVector childLocation = childLink->GetActorLocation();
+    FRotator parentRotation = parentLink->GetActorRotation();
+    FRotator childRotation = childLink->GetActorRotation();
 
-    float meterToUU = UAirBlueprintLib::GetWorldToMetersScale(this);
-    float lowerUU = jointSpecification.Limit->Lower * meterToUU;
-    float upperUU = jointSpecification.Limit->Upper * meterToUU;
+    float lowerUU = jointSpecification.Limit->Lower * this->world_scale_;
+    float upperUU = jointSpecification.Limit->Upper * this->world_scale_;
 
-    FVector unitVectorOfAxis = parentRotation.RotateVector(jointSpecification.Axis);
-
+    FVector xAxisInParentFrame = parentRotation.UnrotateVector(FVector(1, 0, 0));
+    FRotator axisRotator = jointSpecification.Axis.Rotation();
+    FVector unitVectorOfAxis = axisRotator.UnrotateVector(xAxisInParentFrame);
 
     if (!unitVectorOfAxis.Normalize())
     {
@@ -680,11 +676,11 @@ FVector AUrdfBotPawn::MoveChildLinkForLimitedXAxisMotion(AUrdfLink* parentLink, 
     FVector childMinLocation = parentLocation + (unitVectorOfAxis * lowerUU);
     FVector childMaxLocation = parentLocation + (unitVectorOfAxis * upperUU);
     FVector requiredPositionParent = (childMinLocation + childMaxLocation) * 0.5f;
-    FVector childInParent = (childLocation - parentLocation).ProjectOnTo(unitVectorOfAxis) + parentLocation;
-    FVector transform = requiredPositionParent - childInParent;
+    FVector transform = requiredPositionParent - parentLocation;
     inverseTransform = -1 * transform;
 
     childLink->SetActorLocation(childLocation + transform, false, nullptr, ETeleportType::TeleportPhysics);
+    FVector ww = childLink->GetActorLocation();
 
     return inverseTransform;
 }
@@ -693,7 +689,7 @@ void AUrdfBotPawn::DrawDebug()
 {
     UWorld* world = this->GetWorld();
 
-    FColor jointColor(255, 0, 255);
+    FColor jointColor = FColor::Emerald;
     bool persistant = false;
     float persistSeconds = -1;
     uint8 priority = (uint8)'\002';
@@ -710,7 +706,6 @@ void AUrdfBotPawn::DrawDebug()
         FVector actualLocation = component->GetActorLocation();
         FRotator actualRotation = component->GetActorRotation();
 
-        // Draw debug axis
         FVector xx(axisLineLength, 0, 0);
         FVector yy(0, axisLineLength, 0);
         FVector zz(0, 0, axisLineLength);
@@ -721,9 +716,9 @@ void AUrdfBotPawn::DrawDebug()
         FVector zzt = actualRotation.RotateVector(zz) + actualLocation;
         FVector zzzt = actualRotation.RotateVector(zzz) + actualLocation;
 
-        DrawDebugLine(world, zzzt, xxt, FColor(255, 0, 0), persistant, persistSeconds, priority, thickness);
-        DrawDebugLine(world, zzzt, yyt, FColor(0, 255, 0), persistant, persistSeconds, priority, thickness);
-        DrawDebugLine(world, zzzt, zzt, FColor(0, 0, 255), persistant, persistSeconds, priority, thickness);
+        DrawDebugLine(world, zzzt, xxt, FColor::Red, persistant, persistSeconds, priority, thickness);
+        DrawDebugLine(world, zzzt, yyt, FColor::Green, persistant, persistSeconds, priority, thickness);
+        DrawDebugLine(world, zzzt, zzt, FColor::Blue, persistant, persistSeconds, priority, thickness);
     }
 
     // Draw constraints
@@ -734,7 +729,7 @@ void AUrdfBotPawn::DrawDebug()
 
         if (jointType == REVOLUTE_TYPE)
         {
-            FVector directionLocal(0, jointCircleRadius/2, 0);
+            FVector directionLocal(0, jointCircleRadius / 2, 0);
             FRotator componentRotator = component->GetComponentRotation();
             FVector unitX(1, 0, 0);
             FVector localX = componentRotator.RotateVector(unitX);
@@ -750,15 +745,15 @@ void AUrdfBotPawn::DrawDebug()
             FVector minDirectionGlobal = componentRotator.RotateVector(directionMin);
             FVector maxDirectionGlobal = componentRotator.RotateVector(directionMax);
 
-            DrawDebugLine(world, component->GetComponentLocation(), component->GetComponentLocation() + minDirectionGlobal, FColor(255, 255, 0), persistant, persistSeconds, priority, thickness * 2);
-            DrawDebugLine(world, component->GetComponentLocation(), component->GetComponentLocation() + maxDirectionGlobal, FColor(255, 0, 255), persistant, persistSeconds, priority, thickness * 2);
+            DrawDebugLine(world, component->GetComponentLocation(), component->GetComponentLocation() + minDirectionGlobal, FColor::Yellow, persistant, persistSeconds, priority, thickness * 2);
+            DrawDebugLine(world, component->GetComponentLocation(), component->GetComponentLocation() + maxDirectionGlobal, FColor::Magenta, persistant, persistSeconds, priority, thickness * 2);
 
 
             FVector unitXLocal = componentRotator.RotateVector(unitX);
             FVector start = component->GetComponentLocation();
             FVector end = start + (unitXLocal * jointCircleRadius / 2);
 
-            DrawDebugLine(world, start, end, FColor(0, 0, 0), persistant, persistSeconds, priority, thickness * 2);
+            DrawDebugLine(world, start, end, FColor::Black, persistant, persistSeconds, priority, thickness * 2);
         }
         else if (jointType == CONTINUOUS_TYPE)
         {
@@ -774,15 +769,21 @@ void AUrdfBotPawn::DrawDebug()
             float extents = component->ConstraintInstance.ProfileInstance.LinearLimit.Limit;
             FVector startLocal(-extents, 0, 0);
             FVector endLocal(extents, 0, 0);
-            FVector startWorld = component->GetComponentRotation().RotateVector(startLocal) + component->GetComponentLocation();
-            FVector endWorld = component->GetComponentRotation().RotateVector(endLocal) + component->GetComponentLocation();
+            FVector componentLocation = component->GetComponentLocation();
+            FRotator componentRotation = component->GetComponentRotation();
+            FVector startOffset = componentRotation.RotateVector(startLocal);
+            FVector endOffset = componentRotation.RotateVector(endLocal);
+            FVector startWorld = componentLocation + startOffset;
+            FVector endWorld = componentLocation + endOffset;
 
-            DrawDebugLine(world, startWorld, endWorld, jointColor, persistant, persistSeconds, priority, thickness);
+            DrawDebugLine(world, startWorld, endWorld, jointColor, persistant, persistSeconds, priority, thickness / 2);
+
+            DrawDebugPoint(world, startWorld, thickness * 4, FColor::Yellow, persistant, persistSeconds, priority);
+            DrawDebugPoint(world, endWorld, thickness * 4, FColor::Magenta, persistant, persistSeconds, priority);
         }
         else if (jointType == FIXED_TYPE)
         {
-            // Draw a green sphere for now
-            DrawDebugSphere(world, component->GetComponentLocation(), jointCircleRadius, jointCircleSegments, FColor(0, 255, 0), persistant, persistSeconds, priority, thickness);
+            DrawDebugPoint(world, component->GetComponentLocation(), jointCircleRadius, jointColor, persistant, persistSeconds, priority);
         }
         else if (jointType == FLOATING_TYPE)
         {

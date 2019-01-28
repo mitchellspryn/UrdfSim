@@ -1,10 +1,11 @@
 #include "StaticMeshGenerator.h"
 
-bool StaticMeshGenerator::Initialize(UStaticMesh* boxTemplateMesh, UStaticMesh* cylinderTemplateMesh, UStaticMesh* sphereTemplateMesh)
+bool StaticMeshGenerator::Initialize(UStaticMesh* boxTemplateMesh, UStaticMesh* cylinderTemplateMesh, UStaticMesh* sphereTemplateMesh, TMap<FString, UStaticMesh*> unrealMeshes)
 {
     this->boxTemplateMesh_ = boxTemplateMesh;
     this->cylinderTemplateMesh_ = cylinderTemplateMesh;
     this->sphereTemplateMesh_ = sphereTemplateMesh;
+    this->unrealMeshes_ = unrealMeshes;
 
     return true;
 }
@@ -62,85 +63,109 @@ bool StaticMeshGenerator::CreateUnscaledMeshForLink(FString linkName, UrdfGeomet
     else if (geometryType == MESH)
     {
         meshSpecification = static_cast<UrdfMesh*>(visualGeometry);
-        this->ParseProceduralMeshSpecification(meshSpecification->FileLocation, meshSpecification->FileType, meshSpecification->ReverseNormals, meshSpecification->ScaleFactor, proceduralMeshSpecification);
 
-        UProceduralMeshComponent* meshComponent = NewObject<UProceduralMeshComponent>(outer, meshName);
-        meshComponent->CreateMeshSection_LinearColor(
-            0,
-            proceduralMeshSpecification.Verticies,
-            proceduralMeshSpecification.Triangles,
-            TArray<FVector>(),
-            TArray<FVector2D>(),
-            TArray<FLinearColor>(),
-            TArray<FProcMeshTangent>(),
-            true);
-
-        meshComponent->bUseComplexAsSimpleCollision = false;
-        meshSpecification = static_cast<UrdfMesh*>(collisionGeometry);
-
-        if (meshSpecification->DynamicCollisionType == COL_BSP)
+        if (meshSpecification->FileType == UNREAL_MESH)
         {
-            if (reparseMeshGeometry)
+            UStaticMeshComponent* meshComponent = NewObject<UStaticMeshComponent>(outer, meshName);
+
+            if (!this->unrealMeshes_.Contains(meshSpecification->FileLocation))
             {
-                this->ParseProceduralMeshSpecification(meshSpecification->FileLocation, meshSpecification->FileType, meshSpecification->ReverseNormals, meshSpecification->ScaleFactor, proceduralMeshSpecification);
+                throw std::runtime_error("Unable to find static mesh '" + std::string(TCHAR_TO_UTF8(*meshSpecification->FileLocation)) + "' in StaticMeshGenerator.");
             }
 
-            UModel* tempModel = NewObject<UModel>(outer, TEXT("tmp"));
-            tempModel->Initialize(nullptr, 1);
+            UStaticMesh* staticMesh = this->unrealMeshes_[meshSpecification->FileLocation];
+            meshComponent->SetStaticMesh(staticMesh);
 
-            this->GenerateBspCollisionMesh(proceduralMeshSpecification, tempModel);
+            meshComponent->SetSimulatePhysics(true);
+            meshComponent->SetCollisionObjectType(ECollisionChannel::ECC_PhysicsBody);
+            meshComponent->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+            meshComponent->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
+            meshComponent->SetNotifyRigidBodyCollision(true);
 
-            UBodySetup* bs = meshComponent->GetBodySetup();
-            bs->Modify();
-            bs->CreateFromModel(tempModel, false);
-
-            for (int i = 0; i < bs->AggGeom.ConvexElems.Num(); i++)
-            {
-                meshComponent->AddCollisionConvexMesh(bs->AggGeom.ConvexElems[i].VertexData);
-            }
-        }
-        else if (meshSpecification->DynamicCollisionType == COL_VHACD)
-        {
-            if (reparseMeshGeometry)
-            {
-                meshSpecification = static_cast<UrdfMesh*>(collisionGeometry);
-                this->ParseProceduralMeshSpecification(meshSpecification->FileLocation, meshSpecification->FileType, meshSpecification->ReverseNormals, meshSpecification->ScaleFactor, proceduralMeshSpecification);
-            }
-
-            // type conversion
-            TArray<uint32> triangles;
-            for (int i = 0; i < proceduralMeshSpecification.Triangles.Num(); i++)
-            {
-                triangles.Add(proceduralMeshSpecification.Triangles[i]);
-            }
-
-            TArray<TArray<FVector>> vhacdCollision = this->CreateCollisionVAHCD(proceduralMeshSpecification.Verticies, triangles, meshSpecification->VhacdConcavity, meshSpecification->VhacdResolution, meshSpecification->VhacdMaxNumVerticesPerCh, meshSpecification->VhacdMinVolumePerCh);
-
-            meshComponent->SetCollisionConvexMeshes(vhacdCollision);
-
-            if (meshSpecification->VhacdOutputFolderPath.Len() > 0)
-            {
-                this->SaveVhacdGeneratedCollision(vhacdCollision, meshSpecification->VhacdOutputFolderPath);
-            }
-        }
-        else if (meshSpecification->DynamicCollisionType == COL_MANUAL)
-        {
-            TArray<TArray<FVector>> manualCollision = this->ReadManualCollision(meshSpecification->FileLocation);
-            meshComponent->SetCollisionConvexMeshes(manualCollision);
+            link->SetMeshFromStaticMeshComponent(meshComponent);
         }
         else
         {
-            throw std::runtime_error("Unrecognized collision type in StaticMeshGenerator.");
+            this->ParseProceduralMeshSpecification(meshSpecification->FileLocation, meshSpecification->FileType, meshSpecification->ReverseNormals, meshSpecification->ScaleFactor, proceduralMeshSpecification);
+
+            UProceduralMeshComponent* meshComponent = NewObject<UProceduralMeshComponent>(outer, meshName);
+            meshComponent->CreateMeshSection_LinearColor(
+                0,
+                proceduralMeshSpecification.Verticies,
+                proceduralMeshSpecification.Triangles,
+                TArray<FVector>(),
+                TArray<FVector2D>(),
+                TArray<FLinearColor>(),
+                TArray<FProcMeshTangent>(),
+                true);
+
+            meshComponent->bUseComplexAsSimpleCollision = false;
+            meshSpecification = static_cast<UrdfMesh*>(collisionGeometry);
+
+            if (meshSpecification->DynamicCollisionType == COL_BSP)
+            {
+                if (reparseMeshGeometry)
+                {
+                    this->ParseProceduralMeshSpecification(meshSpecification->FileLocation, meshSpecification->FileType, meshSpecification->ReverseNormals, meshSpecification->ScaleFactor, proceduralMeshSpecification);
+                }
+
+                UModel* tempModel = NewObject<UModel>(outer, TEXT("tmp"));
+                tempModel->Initialize(nullptr, 1);
+
+                this->GenerateBspCollisionMesh(proceduralMeshSpecification, tempModel);
+
+                UBodySetup* bs = meshComponent->GetBodySetup();
+                bs->Modify();
+                bs->CreateFromModel(tempModel, false);
+
+                for (int i = 0; i < bs->AggGeom.ConvexElems.Num(); i++)
+                {
+                    meshComponent->AddCollisionConvexMesh(bs->AggGeom.ConvexElems[i].VertexData);
+                }
+            }
+            else if (meshSpecification->DynamicCollisionType == COL_VHACD)
+            {
+                if (reparseMeshGeometry)
+                {
+                    meshSpecification = static_cast<UrdfMesh*>(collisionGeometry);
+                    this->ParseProceduralMeshSpecification(meshSpecification->FileLocation, meshSpecification->FileType, meshSpecification->ReverseNormals, meshSpecification->ScaleFactor, proceduralMeshSpecification);
+                }
+
+                // type conversion
+                TArray<uint32> triangles;
+                for (int i = 0; i < proceduralMeshSpecification.Triangles.Num(); i++)
+                {
+                    triangles.Add(proceduralMeshSpecification.Triangles[i]);
+                }
+
+                TArray<TArray<FVector>> vhacdCollision = this->CreateCollisionVAHCD(proceduralMeshSpecification.Verticies, triangles, meshSpecification->VhacdConcavity, meshSpecification->VhacdResolution, meshSpecification->VhacdMaxNumVerticesPerCh, meshSpecification->VhacdMinVolumePerCh);
+
+                meshComponent->SetCollisionConvexMeshes(vhacdCollision);
+
+                if (meshSpecification->VhacdOutputFolderPath.Len() > 0)
+                {
+                    this->SaveVhacdGeneratedCollision(vhacdCollision, meshSpecification->VhacdOutputFolderPath);
+                }
+            }
+            else if (meshSpecification->DynamicCollisionType == COL_MANUAL)
+            {
+                TArray<TArray<FVector>> manualCollision = this->ReadManualCollision(meshSpecification->FileLocation);
+                meshComponent->SetCollisionConvexMeshes(manualCollision);
+            }
+            else
+            {
+                throw std::runtime_error("Unrecognized collision type in StaticMeshGenerator.");
+            }
+
+
+            meshComponent->SetSimulatePhysics(true);
+            meshComponent->SetCollisionObjectType(ECollisionChannel::ECC_PhysicsBody);
+            meshComponent->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+            meshComponent->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
+            meshComponent->SetNotifyRigidBodyCollision(true);
+
+            link->SetMeshFromProceduralMeshComponent(meshComponent);
         }
-       
-
-        meshComponent->SetSimulatePhysics(true);
-        meshComponent->SetCollisionObjectType(ECollisionChannel::ECC_PhysicsBody);
-        meshComponent->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
-        meshComponent->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
-        meshComponent->SetNotifyRigidBodyCollision(true);
-
-        link->SetMeshFromProceduralMeshComponent(meshComponent);
     }
 
     return true;

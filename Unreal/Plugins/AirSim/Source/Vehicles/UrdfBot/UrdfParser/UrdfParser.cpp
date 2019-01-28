@@ -762,9 +762,13 @@ UrdfGeometry* UrdfParser::ParseUrdfGeometrySpecification(FXmlNode *geometryNode)
                     {
                         mesh->FileType = STL_ASCII;
                     }
+                    else if (value.Equals(TEXT("unreal_mesh")))
+                    {
+                        mesh->FileType = UNREAL_MESH;
+                    }
                     else
                     {
-                        throw std::runtime_error("Unrecognized file type: " + std::string(TCHAR_TO_UTF8(*(value))) + ". Valid values are 'stl_ascii'");
+                        throw std::runtime_error("Unrecognized file type: " + std::string(TCHAR_TO_UTF8(*(value))) + ". Valid values are 'stl_ascii', 'unreal_mesh'");
                     }
 
                     foundType = true;

@@ -2,5 +2,6 @@
 
 enum ProceduralMeshFileType
 {
-    STL_ASCII
+    STL_ASCII,
+    UNREAL_MESH
 };

@@ -130,6 +130,7 @@ void ASimModeUrdfBot::setupVehiclesAndCamera()
 
     AUrdfBotPawn* fpv_pawn = nullptr;
 
+    int cnt = this->getSettings().vehicles.size();
     for (auto const& vehicle_setting_pair : this->getSettings().vehicles) {
         std::string vehicle_name = vehicle_setting_pair.first;
         const auto& vehicle_setting = *vehicle_setting_pair.second;

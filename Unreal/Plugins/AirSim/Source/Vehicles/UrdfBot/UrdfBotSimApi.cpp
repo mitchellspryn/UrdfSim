@@ -59,7 +59,6 @@ std::string UrdfBotSimApi::getRecordFileLine(bool is_header_line) const
 
 void UrdfBotSimApi::createVehicleApi(AUrdfBotPawn* pawn, const msr::airlib::GeoPoint& home_geopoint)
 {
-    // TODO: For each LIDAR, we need to set the correct actor and NED transform.
     TMap<FString, AActor*> components;
     for (auto const &kvp : pawn->GetLinkComponents())
     {
