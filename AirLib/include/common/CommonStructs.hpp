@@ -304,5 +304,11 @@ struct LidarData {
     {}
 };
 
+struct CameraPose {
+    std::string camera_name;
+    Vector3r translation;
+    Quaternionr rotation;
+};
+
 }} //namespace
 #endif

@@ -217,8 +217,7 @@ void ASimModeUrdfBot::setupVehiclesAndCamera()
     }
 
     // Set up camera cycling
-
-    if (cameras_.Num() < 1) {
+    if (this->cameras_.Num() < 1) {
         throw std::runtime_error("UrdfBotPawn has no cameras defined. Please define at least one camera in settings.json");
     }
 

@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>e2049e20-b6dd-474e-8bca-1c8dc54725aa</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>urdfbot\ArmClientTest.py</StartupFile>
+    <StartupFile>urdfbot\LunabotClientTest.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -130,6 +130,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="urdfbot\LunabotClientTest.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="urdfbot\MoveCameraTest.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="urdfbot\setup_path.py">

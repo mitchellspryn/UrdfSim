@@ -525,6 +525,34 @@ public:
             readings = sensors.getReadings();
         }
     };
+
+    struct CameraPose {
+        std::string camera_name;
+        Vector3r translation;
+        Quaternionr rotation;
+
+        MSGPACK_DEFINE_MAP(camera_name, translation, rotation);
+        
+        CameraPose() {}
+
+        CameraPose(const msr::airlib::CameraPose& position)
+        {
+            this->camera_name = position.camera_name;
+            this->translation = position.translation;
+            this->rotation = position.rotation;
+        }
+
+        msr::airlib::CameraPose to() const
+        {
+            msr::airlib::CameraPose p;
+
+            p.camera_name = this->camera_name;
+            p.translation = this->translation.to();
+            p.rotation = this->rotation.to();
+
+            return p;
+        }
+    };
 };
 
 }} //namespace

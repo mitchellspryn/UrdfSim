@@ -287,3 +287,13 @@ class UrdfBotControlledMotionComponentControlSignal(MsgpackMixin):
     def __init__(self, component_name = '', control_signal_values = {}):
         self.component_name = component_name
         self.control_signal_values = control_signal_values
+
+class CameraPose(MsgpackMixin):
+    camera_name = ''
+    translation = Vector3r()
+    rotation = Quaternionr()
+
+    def __init__(self, camera_name, translation, rotation):
+        self.camera_name = camera_name
+        self.translation = translation
+        self.rotation = rotation

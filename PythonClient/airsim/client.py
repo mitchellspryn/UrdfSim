@@ -93,6 +93,9 @@ class VehicleClient:
         responses_raw = self.client.call('simGetImages', requests, vehicle_name)
         return [ImageResponse.from_msgpack(response_raw) for response_raw in responses_raw]
 
+    def simSetCameraPose(self, camera_pose_obj, vehicle_name = ''):
+        self.client.call('simSetCameraPose', camera_pose_obj, vehicle_name)
+
     def readSensors(self, vehicle_name = ''):
         responses_raw = self.client.call('readSensors', vehicle_name)
         return responses_raw

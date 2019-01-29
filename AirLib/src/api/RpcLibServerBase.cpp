@@ -93,6 +93,7 @@ RpcLibServerBase::RpcLibServerBase(ApiProvider* api_provider, const std::string&
             const auto& response = getVehicleSimApi(vehicle_name)->getImages(RpcLibAdapatorsBase::ImageRequest::to(request_adapter));
             return RpcLibAdapatorsBase::ImageResponse::from(response);
     });
+
     pimpl_->server.bind("simGetImage", [&](const std::string& camera_name, ImageCaptureBase::ImageType type, const std::string& vehicle_name) -> vector<uint8_t> {
         auto result = getVehicleSimApi(vehicle_name)->getImage(camera_name, type);
         if (result.size() == 0) {
@@ -100,6 +101,10 @@ RpcLibServerBase::RpcLibServerBase(ApiProvider* api_provider, const std::string&
             result.push_back(0);
         }
         return result;
+    });
+
+    pimpl_->server.bind("simSetCameraPose", [&](const RpcLibAdapatorsBase::CameraPose camera_pose, const std::string& vehicle_name) -> void {
+        getVehicleSimApi(vehicle_name)->setCameraPose(camera_pose.to());
     });
 
     pimpl_->server.bind("readSensors", [&](const std::string& vehicle_name) ->

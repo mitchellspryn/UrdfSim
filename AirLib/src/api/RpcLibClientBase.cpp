@@ -207,6 +207,11 @@ vector<uint8_t> RpcLibClientBase::simGetImage(const std::string& camera_name, Im
     return result;
 }
 
+void RpcLibClientBase::simSetCameraPose(const CameraPose camera_pose, const std::string& vehicle_name)
+{
+    pimpl_->client.call("simSetCameraPose", msr::airlib_rpclib::RpcLibAdapatorsBase::CameraPose(camera_pose), vehicle_name);
+}
+
 void RpcLibClientBase::simPrintLogMessage(const std::string& message, std::string message_param, unsigned char  severity)
 {
     pimpl_->client.call("simPrintLogMessage", message, message_param, severity);

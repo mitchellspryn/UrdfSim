@@ -205,6 +205,29 @@ std::vector<uint8_t> PawnSimApi::getImage(const std::string& camera_name, ImageC
         return std::vector<uint8_t>();
 }
 
+void PawnSimApi::setCameraPose(const msr::airlib::CameraPose camera_pose)
+{
+    auto matchedCamera = this->cameras_.findOrDefault(camera_pose.camera_name, nullptr);
+
+    if (matchedCamera == nullptr)
+    {
+        return;
+    }
+
+    AActor* cameraActor = matchedCamera->GetAttachParentActor();
+
+    FVector transformVec = FVector(camera_pose.translation.x(), camera_pose.translation.y(), camera_pose.translation.z());
+    transformVec *= UAirBlueprintLib::GetWorldToMetersScale(cameraActor); // API will be specified in meters
+    FQuat qq(camera_pose.rotation.x(), camera_pose.rotation.y(), camera_pose.rotation.z(), camera_pose.rotation.w());
+    FRotator rotation = qq.Rotator();
+
+    FDetachmentTransformRules detatchRules(EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, true);
+    matchedCamera->DetachFromActor(detatchRules);
+    matchedCamera->SetActorLocation(cameraActor->GetActorLocation() + transformVec);
+    matchedCamera->SetActorRotation(cameraActor->GetActorRotation() + rotation);
+    matchedCamera->AttachToComponent(cameraActor->GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
+}
+
 void PawnSimApi::setRCForceFeedback(float rumble_strength, float auto_center)
 {
     if (joystick_state_.is_initialized) {
