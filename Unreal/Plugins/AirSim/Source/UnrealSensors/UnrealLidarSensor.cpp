@@ -190,7 +190,7 @@ bool UnrealLidarSensor::shootLaser(const msr::airlib::Pose& lidar_pose, const ms
 
     FVector shootVec = endVec - startVec;
 
-    bool is_hit = UAirBlueprintLib::GetObstacle(actor_, startVec, endVec, hit_result, nullptr, ECC_Visibility, this->ignore_pawn_collision_);
+    bool is_hit = UAirBlueprintLib::GetObstacle(actor_, startVec, endVec, hit_result, TArray<const AActor*>(), ECC_Visibility, this->ignore_pawn_collision_);
 
     if (is_hit)
     {

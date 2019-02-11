@@ -47,6 +47,16 @@ public:
     int simGetSegmentationObjectID(const std::string& mesh_name) const;
     void simPrintLogMessage(const std::string& message, std::string message_param = "", unsigned char severity = 0);
 
+    std::map<std::string, std::map<std::string, float> > readSensors(const std::string vehicle_name = "");
+    msr::airlib::RayCastResponse simRayCast(const msr::airlib::RayCastRequest request, const std::string vehicle_name = "");
+    void simSetDrawableShapes(const msr::airlib::DrawableShapeRequest request, const std::string vehicle_name = "");
+
+    void addDrawableShapePoint(msr::airlib::DrawableShapeRequest &request, const std::string &shape_name, const std::string &reference_frame_link, float x, float y, float z, float size, int color_r, int color_g, int color_b, int color_a);
+    void addDrawableShapeSphere(msr::airlib::DrawableShapeRequest &request, const std::string &shape_name, const std::string &reference_frame_link, float x, float y, float z, float radius, float thickness, int number_of_segments, int color_r, int color_g, int color_b, int color_a);
+    void addDrawableShapeCircle(msr::airlib::DrawableShapeRequest &request, const std::string &shape_name, const std::string &reference_frame_link, float x, float y, float z, float normal_x, float normal_y, float normal_z, float radius, float thickness, int number_of_segments, int color_r, int color_g, int color_b, int color_a);
+    void addDrawableShapeBox(msr::airlib::DrawableShapeRequest &request, const std::string &shape_name, const std::string &reference_frame_link, float x, float y, float z, float extents_x, float extents_y, float extents_z, float thickness, int color_r, int color_g, int color_b, int color_a);
+    void addDrawableShapeLine(msr::airlib::DrawableShapeRequest &request, const std::string &shape_name, const std::string &reference_frame_link, float start_x, float start_y, float start_z, float end_x, float end_y, float end_z, float thickness, int color_r, int color_g, int color_b, int color_a);
+    
 
     bool armDisarm(bool arm, const std::string& vehicle_name = "");
     bool isApiControlEnabled(const std::string& vehicle_name = "") const;
@@ -70,6 +80,8 @@ public:
 
     msr::airlib::Kinematics::State simGetGroundTruthKinematics(const std::string& vehicle_name = "") const;
     msr::airlib::Environment::State simGetGroundTruthEnvironment(const std::string& vehicle_name = "") const;
+
+
 
     //----------- APIs to control ACharacter in scene ----------/
     void simCharSetFaceExpression(const std::string& expression_name, float value, const std::string& character_name = "");

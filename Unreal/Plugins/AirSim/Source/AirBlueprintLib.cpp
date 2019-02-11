@@ -353,14 +353,15 @@ bool UAirBlueprintLib::HasObstacle(const AActor* actor, const FVector& start, co
 }
 
 bool UAirBlueprintLib::GetObstacle(const AActor* actor, const FVector& start, const FVector& end,
-    FHitResult& hit, const AActor* ignore_actor, ECollisionChannel collision_channel, bool ignore_root_actor)
+    FHitResult& hit, TArray<const AActor*> ignore_actors, ECollisionChannel collision_channel, bool ignore_root_actor)
 {
     hit = FHitResult(ForceInit);
 
     FCollisionQueryParams trace_params;
     if (ignore_root_actor)
         trace_params.AddIgnoredActor(actor);
-    if (ignore_actor != nullptr)
+
+    for (const auto &ignore_actor : ignore_actors)
         trace_params.AddIgnoredActor(ignore_actor);
 
     return actor->GetWorld()->LineTraceSingleByChannel(hit, start, end, collision_channel, trace_params);
@@ -396,10 +397,12 @@ void UAirBlueprintLib::FollowActor(AActor* follower, const AActor* followee, con
     if (fixed_z)
         next_location.Z = fixed_z_val;
 
-    if (GetObstacle(follower, next_location, actor_location, hit, followee)) {
+    TArray<const AActor*> ignore_actors;
+    ignore_actors.Emplace(followee);
+    if (GetObstacle(follower, next_location, actor_location, hit, ignore_actors)) {
         next_location = hit.ImpactPoint + offset;
 
-        if (GetObstacle(follower, next_location, actor_location, hit, followee)) {
+        if (GetObstacle(follower, next_location, actor_location, hit, ignore_actors)) {
             float next_z = next_location.Z;
             next_location = hit.ImpactPoint - offset;
             next_location.Z = next_z;

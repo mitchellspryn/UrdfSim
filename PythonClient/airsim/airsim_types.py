@@ -297,3 +297,50 @@ class CameraPose(MsgpackMixin):
         self.camera_name = camera_name
         self.translation = translation
         self.rotation = rotation
+
+class RayCastRequest(MsgpackMixin):
+    position = Vector3r()
+    direction = Vector3r()
+    reference_frame_link = ''
+    through_blocking = False
+    persist_seconds = 0
+
+    def __init__(self, position, direction, reference_frame_link, through_blocking, persist_seconds):
+        self.position = position
+        self.direction = direction
+        self.reference_frame_link = reference_frame_link
+        self.through_blocking = through_blocking
+        self.persist_seconds = persist_seconds
+
+class RayCastHit:
+    collided_actor_name = ''
+    hit_point = Vector3r()
+    hit_normal = Vector3r()
+
+    def __init__(self, collided_actor_name = '', hit_point = Vector3r(), hit_normal = Vector3r()):
+        self.collided_actor_name = collided_actor_name
+        self.hit_point = hit_point
+        self.hit_normal = hit_normal
+
+class RayCastResponse(MsgpackMixin):
+    hits = []
+    def __init__(self, hits = []):
+        self.hits = hits
+
+class DrawableShape(MsgpackMixin):
+    reference_frame_link = ''
+    type = 0
+    shape_params = []
+
+    def __init__(self, reference_frame_link, type, shape_params):
+        self.reference_frame_link = reference_frame_link
+        self.type = type
+        self.shape_params = shape_params
+
+class DrawableShapeRequest(MsgpackMixin):
+    shapes = {}
+    persist_unmentioned = False
+
+    def __init__(self, shapes = {}, persist_unmentioned = False):
+        self.shapes = shapes
+        self.persist_unmentioned = persist_unmentioned

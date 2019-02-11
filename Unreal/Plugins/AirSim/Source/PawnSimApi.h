@@ -79,6 +79,7 @@ public: //implementation of VehicleSimApiBase
     virtual void setPose(const Pose& pose, bool ignore_collision) override;
     virtual msr::airlib::CameraInfo getCameraInfo(const std::string& camera_name) const override;
     virtual void setCameraOrientation(const std::string& camera_name, const Quaternionr& orientation) override;
+    virtual msr::airlib::RayCastResponse rayCast(const msr::airlib::RayCastRequest& request) override;
     virtual CollisionInfo getCollisionInfo() const override;
     virtual int getRemoteControlID() const override;
     virtual msr::airlib::RCData getRCData() const override;
@@ -93,6 +94,8 @@ public: //implementation of VehicleSimApiBase
     virtual const msr::airlib::Kinematics::State* getGroundTruthKinematics() const override;
     virtual const msr::airlib::Environment* getGroundTruthEnvironment() const override;
     virtual std::string getRecordFileLine(bool is_header_line) const override;
+
+    virtual void setDrawShapes(std::unordered_map<std::string, msr::airlib::DrawableShape> &drawableShapes, bool persistUnmentioned);
 
 protected: //additional interface for derived class
     virtual void pawnTick(float dt);
@@ -142,6 +145,7 @@ private: //methods
     PawnSimApi::Pose toPose(const FVector& u_position, const FQuat& u_quat) const;
     void updateKinematics(float dt);
     void setStartPosition(const FVector& position, const FRotator& rotator);
+    void drawDrawShapes();
 
 private: //vars
     typedef msr::airlib::AirSimSettings AirSimSettings;
@@ -186,4 +190,6 @@ private: //vars
 
     msr::airlib::Kinematics::State kinematics_;
     std::unique_ptr<msr::airlib::Environment> environment_;
+
+    std::unordered_map<std::string, msr::airlib::DrawableShape> drawable_shapes_;
 };

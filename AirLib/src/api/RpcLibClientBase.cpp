@@ -217,6 +217,139 @@ void RpcLibClientBase::simPrintLogMessage(const std::string& message, std::strin
     pimpl_->client.call("simPrintLogMessage", message, message_param, severity);
 }
 
+std::map<std::string, std::map<std::string, float> > RpcLibClientBase::readSensors(const std::string vehicle_name)
+{
+    return pimpl_->client.call("readSensors", vehicle_name).as<msr::airlib_rpclib::RpcLibAdapatorsBase::SensorReadings>().readings;
+}
+
+msr::airlib::RayCastResponse RpcLibClientBase::simRayCast(const msr::airlib::RayCastRequest request, const std::string vehicle_name)
+{
+    return pimpl_->client.call("simRayCast", msr::airlib_rpclib::RpcLibAdapatorsBase::RayCastRequest(request), vehicle_name).as<msr::airlib_rpclib::RpcLibAdapatorsBase::RayCastResponse>().to();
+}
+
+void RpcLibClientBase::simSetDrawableShapes(const msr::airlib::DrawableShapeRequest request, const std::string vehicle_name)
+{
+    pimpl_->client.call("simSetDrawableShapes", msr::airlib_rpclib::RpcLibAdapatorsBase::DrawableShapeRequest(request), vehicle_name);
+}
+
+void RpcLibClientBase::addDrawableShapePoint(msr::airlib::DrawableShapeRequest &request, const std::string &shape_name, const std::string &reference_frame_link, float x, float y, float z, float size, int color_r, int color_g, int color_b, int color_a)
+{
+    msr::airlib::DrawableShape shape;
+    shape.reference_frame_link = reference_frame_link;
+    shape.type = 0;
+
+    shape.shape_params = std::vector<float>
+    {
+        x,
+        y,
+        z,
+        size,
+        static_cast<float>(color_r),
+        static_cast<float>(color_g),
+        static_cast<float>(color_b),
+        static_cast<float>(color_a)
+    };
+
+    request.shapes.emplace(shape_name, shape);
+}
+
+void RpcLibClientBase::addDrawableShapeSphere(msr::airlib::DrawableShapeRequest &request, const std::string &shape_name, const std::string &reference_frame_link, float x, float y, float z, float radius, float thickness, int number_of_segments, int color_r, int color_g, int color_b, int color_a)
+{
+    msr::airlib::DrawableShape shape;
+    shape.reference_frame_link = reference_frame_link;
+    shape.type = 1;
+
+    shape.shape_params = std::vector<float>
+    {
+        x,
+        y,
+        z,
+        radius,
+        thickness,
+        static_cast<float>(number_of_segments),
+        static_cast<float>(color_r),
+        static_cast<float>(color_g),
+        static_cast<float>(color_b),
+        static_cast<float>(color_a)
+    };
+
+    request.shapes.emplace(shape_name, shape);
+}
+
+void RpcLibClientBase::addDrawableShapeCircle(msr::airlib::DrawableShapeRequest &request, const std::string &shape_name, const std::string &reference_frame_link, float x, float y, float z, float normal_x, float normal_y, float normal_z, float radius, float thickness, int number_of_segments, int color_r, int color_g, int color_b, int color_a)
+{
+    msr::airlib::DrawableShape shape;
+    shape.reference_frame_link = reference_frame_link;
+    shape.type = 2;
+
+    shape.shape_params = std::vector<float>
+    {
+        x,
+        y,
+        z,
+        normal_x,
+        normal_y,
+        normal_z,
+        radius,
+        thickness,
+        static_cast<float>(number_of_segments),
+        static_cast<float>(color_r),
+        static_cast<float>(color_g),
+        static_cast<float>(color_b),
+        static_cast<float>(color_a)
+    };
+
+    request.shapes.emplace(shape_name, shape);
+}
+
+void RpcLibClientBase::addDrawableShapeBox(msr::airlib::DrawableShapeRequest &request, const std::string &shape_name, const std::string &reference_frame_link, float x, float y, float z, float extents_x, float extents_y, float extents_z, float thickness, int color_r, int color_g, int color_b, int color_a)
+{
+    msr::airlib::DrawableShape shape;
+    shape.reference_frame_link = reference_frame_link;
+    shape.type = 3;
+
+    shape.shape_params = std::vector<float>
+    {
+        x,
+        y,
+        z,
+        extents_x,
+        extents_y,
+        extents_z,
+        thickness,
+        static_cast<float>(color_r),
+        static_cast<float>(color_g),
+        static_cast<float>(color_b),
+        static_cast<float>(color_a)
+    };
+
+    request.shapes.emplace(shape_name, shape);
+}
+
+void RpcLibClientBase::addDrawableShapeLine(msr::airlib::DrawableShapeRequest &request, const std::string &shape_name, const std::string &reference_frame_link, float start_x, float start_y, float start_z, float end_x, float end_y, float end_z, float thickness, int color_r, int color_g, int color_b, int color_a)
+{
+    msr::airlib::DrawableShape shape;
+    shape.reference_frame_link = reference_frame_link;
+    shape.type = 4;
+
+    shape.shape_params = std::vector<float>
+    {
+        start_x,
+        start_y,
+        start_z,
+        end_x,
+        end_y,
+        end_z,
+        thickness,
+        static_cast<float>(color_r),
+        static_cast<float>(color_g),
+        static_cast<float>(color_b),
+        static_cast<float>(color_a)
+    };
+
+    request.shapes.emplace(shape_name, shape);
+}
+
 bool RpcLibClientBase::simIsPaused() const
 {
     return pimpl_->client.call("simIsPaused").as<bool>();

@@ -59,12 +59,14 @@ public:
 
     virtual CameraInfo getCameraInfo(const std::string& camera_name) const = 0;
     virtual void setCameraOrientation(const std::string& camera_name, const Quaternionr& orientation) = 0;
+    virtual msr::airlib::RayCastResponse rayCast(const msr::airlib::RayCastRequest& request) = 0;
 
     virtual CollisionInfo getCollisionInfo() const = 0;
     virtual int getRemoteControlID() const = 0; //which RC to use, 0 is first one, -1 means disable RC (use keyborad)
     virtual RCData getRCData() const = 0; //get reading from RC from simulator's host OS
     virtual std::string getVehicleName() const = 0;
     virtual std::string getRecordFileLine(bool is_header_line) const = 0;
+    virtual void setDrawShapes(std::unordered_map<std::string, msr::airlib::DrawableShape> &drawableShapes, bool persist_unmentioned) = 0;
     virtual void toggleTrace() = 0;
 
     //use pointer here because of derived classes for VehicleSetting

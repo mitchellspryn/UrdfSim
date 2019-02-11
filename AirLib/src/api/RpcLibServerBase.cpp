@@ -113,6 +113,10 @@ RpcLibServerBase::RpcLibServerBase(ApiProvider* api_provider, const std::string&
         return sr;
     });
 
+    pimpl_->server.bind("simRayCast", [&](const RpcLibAdapatorsBase::RayCastRequest request, const std::string& vehicle_name) -> RpcLibAdapatorsBase::RayCastResponse {
+        return RpcLibAdapatorsBase::RayCastResponse(getVehicleSimApi(vehicle_name)->rayCast(request.to()));
+    });
+
     pimpl_->server.
         bind("simSetVehiclePose", [&](const RpcLibAdapatorsBase::Pose &pose, bool ignore_collision, const std::string& vehicle_name) -> void {
         getVehicleSimApi(vehicle_name)->setPose(pose.to(), ignore_collision);
@@ -129,7 +133,13 @@ RpcLibServerBase::RpcLibServerBase(ApiProvider* api_provider, const std::string&
     pimpl_->server.
         bind("simGetSegmentationObjectID", [&](const std::string& mesh_name) -> int {
         return getWorldSimApi()->getSegmentationObjectID(mesh_name);
-    });    
+    });
+
+    pimpl_->server
+        .bind("simSetDrawableShapes", [&](const RpcLibAdapatorsBase::DrawableShapeRequest request, const std::string& vehicle_name) -> void {
+        auto converted = request.to();
+        getVehicleSimApi(vehicle_name)->setDrawShapes(converted.shapes, converted.persist_unmentioned);
+    });
 
     pimpl_->server.bind("reset", [&]() -> void {
         auto* sim_world_api = getWorldSimApi();

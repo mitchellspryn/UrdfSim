@@ -25,7 +25,7 @@ PawnSimApi::PawnSimApi(const Params& params)
     initial_state_.ground_offset = FVector(0, 0, initial_state_.mesh_bounds.Z);
     initial_state_.transformation_offset = params_.vehicle->GetPawn()->GetActorLocation() - initial_state_.ground_offset;
     ground_margin_ = FVector(0, 0, 20); //TODO: can we explain params_.pawn experimental setting? 7 seems to be minimum
-    ground_trace_end_ = initial_state_.ground_offset + ground_margin_; 
+    ground_trace_end_ = initial_state_.ground_offset + ground_margin_;
 
     setStartPosition(getUUPosition(), getUUOrientation());
 
@@ -39,11 +39,14 @@ PawnSimApi::PawnSimApi(const Params& params)
     initial_state_.was_last_move_teleport = canTeleportWhileMove();
 
     setupCamerasFromSettings(params_.cameras);
-	image_capture_.reset(new UnrealImageCapture(&cameras_));
-	
+    image_capture_.reset(new UnrealImageCapture(&cameras_));
+
     //add listener for pawn's collision event
     params_.pawn_events->getCollisionSignal().connect_member(this, &PawnSimApi::onCollision);
     params_.pawn_events->getPawnTickSignal().connect_member(this, &PawnSimApi::pawnTick);
+
+    //start with no shapes
+    this->drawable_shapes_.clear();
 }
 
 void PawnSimApi::setStartPosition(const FVector& position, const FRotator& rotator)
@@ -56,16 +59,16 @@ void PawnSimApi::setStartPosition(const FVector& position, const FRotator& rotat
 
     //compute our home point
     Vector3r nedWrtOrigin = ned_transform_.toGlobalNed(initial_state_.start_location);
-    home_geo_point_ = msr::airlib::EarthUtils::nedToGeodetic(nedWrtOrigin, 
+    home_geo_point_ = msr::airlib::EarthUtils::nedToGeodetic(nedWrtOrigin,
         AirSimSettings::singleton().origin_geopoint);
 }
 
 void PawnSimApi::pawnTick(float dt)
 {
-
     update();
     updateRenderedState(dt);
     updateRendering(dt);
+    drawDrawShapes();
 }
 
 void PawnSimApi::detectUsbRc()
@@ -140,7 +143,7 @@ void PawnSimApi::createCamerasFromSettings()
     }
 }
 
-void PawnSimApi::onCollision(class UPrimitiveComponent* MyComp, class AActor* Other, class UPrimitiveComponent* OtherComp, 
+void PawnSimApi::onCollision(class UPrimitiveComponent* MyComp, class AActor* Other, class UPrimitiveComponent* OtherComp,
     bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
 {
     // Deflect along the surface when we collide.
@@ -150,7 +153,7 @@ void PawnSimApi::onCollision(class UPrimitiveComponent* MyComp, class AActor* Ot
     UPrimitiveComponent* comp = Cast<class UPrimitiveComponent>(Other ? (Other->GetRootComponent() ? Other->GetRootComponent() : nullptr) : nullptr);
 
     state_.collision_info.has_collided = true;
-    state_.collision_info.normal = Vector3r(Hit.ImpactNormal.X, Hit.ImpactNormal.Y, - Hit.ImpactNormal.Z);
+    state_.collision_info.normal = Vector3r(Hit.ImpactNormal.X, Hit.ImpactNormal.Y, -Hit.ImpactNormal.Z);
     state_.collision_info.impact_point = ned_transform_.toLocalNed(Hit.ImpactPoint);
     state_.collision_info.position = ned_transform_.toLocalNed(getUUPosition());
     state_.collision_info.penetration_depth = ned_transform_.toNed(Hit.PenetrationDepth);
@@ -161,8 +164,8 @@ void PawnSimApi::onCollision(class UPrimitiveComponent* MyComp, class AActor* Ot
     ++state_.collision_info.collision_count;
 
 
-    UAirBlueprintLib::LogMessageString("Collision", Utils::stringf("#%d with %s - ObjID %d", 
-        state_.collision_info.collision_count, 
+    UAirBlueprintLib::LogMessageString("Collision", Utils::stringf("#%d with %s - ObjID %d",
+        state_.collision_info.collision_count,
         state_.collision_info.object_name.c_str(), state_.collision_info.object_id),
         LogDebugLevel::Informational);
 }
@@ -258,7 +261,7 @@ msr::airlib::RCData PawnSimApi::getRCData() const
         rc_data_.switches = joystick_state_.buttons;
         rc_data_.vendor_id = joystick_state_.pid_vid.substr(0, joystick_state_.pid_vid.find('&'));
 
-        
+
         //switch index 0 to 7 for FrSky Taranis RC is:
         //front-upper-left, front-upper-right, top-right-left, top-right-left, top-left-right, top-right-right, top-left-left, top-right-left
 
@@ -276,7 +279,7 @@ msr::airlib::RCData PawnSimApi::getRCData() const
 void PawnSimApi::displayCollisionEffect(FVector hit_location, const FHitResult& hit)
 {
     if (params_.collision_display_template != nullptr && Utils::isDefinitelyLessThan(hit.ImpactNormal.Z, 0.0f)) {
-        UParticleSystemComponent* particles = UGameplayStatics::SpawnEmitterAtLocation(params_.vehicle->GetPawn()->GetWorld(), 
+        UParticleSystemComponent* particles = UGameplayStatics::SpawnEmitterAtLocation(params_.vehicle->GetPawn()->GetWorld(),
             params_.collision_display_template, FTransform(hit_location), true);
         particles->SetWorldScale3D(FVector(0.1f, 0.1f, 0.1f));
     }
@@ -380,7 +383,7 @@ void PawnSimApi::toggleTrace()
 
     if (!state_.tracing_enabled)
         UKismetSystemLibrary::FlushPersistentDebugLines(params_.vehicle->GetPawn()->GetWorld());
-    else {     
+    else {
         state_.debug_position_offset = state_.current_debug_position - state_.current_position;
         state_.last_debug_position = state_.last_position;
     }
@@ -435,6 +438,107 @@ void PawnSimApi::setCameraOrientation(const std::string& camera_name, const msr:
     }, true);
 }
 
+msr::airlib::RayCastResponse PawnSimApi::rayCast(const msr::airlib::RayCastRequest& request)
+{
+    msr::airlib::RayCastResponse response;
+    response.hits.clear();
+
+    UWorld* world = this->getPawn()->GetWorld();
+
+    float worldToMeters = UAirBlueprintLib::GetWorldToMetersScale(this->getPawn());
+
+    FVector start(request.position.x(), request.position.y(), request.position.z());
+
+    FVector end(request.position.x() + request.direction.x(),
+        request.position.y() + request.direction.y(),
+        request.position.z() + request.direction.z());
+
+    start *= worldToMeters;
+    end *= worldToMeters;
+
+    FVector referenceOffset = FVector::ZeroVector;
+    FRotator referenceRotator = FRotator::ZeroRotator;
+
+    if (request.reference_frame_link.length() > 0)
+    {
+        params_.vehicle->GetComponentReferenceTransform(FString(request.reference_frame_link.c_str()), referenceOffset, referenceRotator);
+        
+        start = referenceRotator.RotateVector(start) + referenceOffset;
+        end = referenceRotator.RotateVector(end) + referenceOffset;
+    }
+
+    FHitResult hitResult(ForceInit);
+
+    bool isHit = true;
+    TArray<const AActor*> ignoreActors;
+    while (isHit)
+    {
+        isHit = UAirBlueprintLib::GetObstacle(
+            this->getPawn(),
+            start,
+            end,
+            hitResult,
+            ignoreActors,
+            ECC_Visibility,
+            true);
+
+        if (isHit)
+        {
+            msr::airlib::RayCastHit hit;
+            hit.collided_actor_name = std::string(TCHAR_TO_UTF8(*hitResult.Actor.Get()->GetName()));
+
+            // Translate hit back into local frame of link provided
+            // If no link is provided, this is a noop
+            // Also scale back to MKS
+            FVector hitPoint = referenceRotator.UnrotateVector(hitResult.ImpactPoint - referenceOffset);
+            hitPoint /= worldToMeters;
+
+            hit.hit_point = msr::airlib::Vector3r(hitPoint.X, hitPoint.Y, hitPoint.Z);
+
+            FVector impactNormal = hitResult.ImpactNormal;
+            if (!impactNormal.Normalize())
+            {
+                throw std::runtime_error("Unable to normalize an impact vector.");
+            }
+
+            // Only need to rotate normal
+            FVector hitNormal = referenceRotator.UnrotateVector(impactNormal);
+
+            hit.hit_normal = msr::airlib::Vector3r(hitNormal.X, hitNormal.Y, hitNormal.Z);
+            
+            response.hits.emplace_back(hit);
+
+            // quick debugging draw
+            if (request.persist_seconds > 0)
+            {
+                DrawDebugLine(world, start, hitResult.ImpactPoint, FColor(0, 0, 255, 0), false, request.persist_seconds, (uint8)'\002', 5);
+                DrawDebugPoint(world, hitResult.ImpactPoint, 10, FColor(255, 0, 0, 0), false, request.persist_seconds, (uint8)'\002');
+            }
+
+            if (!request.through_blocking)
+            {
+                return response;
+            }
+            else
+            {
+                start = hitResult.ImpactPoint;
+                ignoreActors.Add(hitResult.Actor.Get());
+            }
+        }
+        else
+        {
+            // quick debugging draw
+            if (request.persist_seconds > 0)
+            {
+                DrawDebugLine(world, start, end, FColor(0, 0, 255, 0), false, request.persist_seconds, (uint8)'\002', 5);
+            }
+        }
+
+    }
+
+    return response;
+}
+
 //parameters in NED frame
 PawnSimApi::Pose PawnSimApi::getPose() const
 {
@@ -458,11 +562,13 @@ void PawnSimApi::setPose(const Pose& pose, bool ignore_collision)
 void PawnSimApi::setPoseInternal(const Pose& pose, bool ignore_collision)
 {
     //translate to new PawnSimApi position & orientation from NED to NEU
-    FVector position = ned_transform_.fromLocalNed(pose.position);
+    //FVector position = ned_transform_.fromLocalNed(pose.position);
+    FVector position(pose.position.x(), pose.position.y(), pose.position.z());
     state_.current_position = position;
 
     //quaternion formula comes from http://stackoverflow.com/a/40334755/207661
-    FQuat orientation = ned_transform_.fromNed(pose.orientation);
+    //FQuat orientation = ned_transform_.fromNed(pose.orientation);
+    FQuat orientation(pose.orientation.x(), pose.orientation.y(), pose.orientation.z(), pose.orientation.w());
 
     bool enable_teleport = ignore_collision || canTeleportWhileMove();
 
@@ -585,6 +691,141 @@ std::string PawnSimApi::getRecordFileLine(bool is_header_line) const
     //ss << kinematics.pose.orientation.w() << "\t" << kinematics.pose.orientation.x() << "\t" << kinematics.pose.orientation.y() << "\t" << kinematics.pose.orientation.z() << "\t";
     //ss << "\n";
     //return ss.str();
+}
+
+void PawnSimApi::setDrawShapes(std::unordered_map<std::string, msr::airlib::DrawableShape> &drawableShapes, bool persist_unmentioned)
+{
+    if (persist_unmentioned)
+    {
+        for (auto &kvp : drawableShapes)
+        {
+            this->drawable_shapes_[kvp.first] = kvp.second;
+        }
+    }
+    else
+    {
+        this->drawable_shapes_ = drawableShapes;
+    }
+}
+
+void PawnSimApi::drawDrawShapes()
+{
+    bool persistant = false;
+    float persistSeconds = -1;
+    uint8 priority = (uint8)'\002';
+
+    auto pawn = this->params_.vehicle;
+    auto world = getPawn()->GetWorld();
+    float worldScale = UAirBlueprintLib::GetWorldToMetersScale(getPawn());
+
+    for (const auto &kvp : this->drawable_shapes_) 
+    {
+        auto shape = kvp.second;
+        FVector offsetVector = FVector::ZeroVector;
+        FRotator offsetRotator = FRotator::ZeroRotator;
+
+        if (shape.reference_frame_link.length() > 0)
+        {
+            pawn->GetComponentReferenceTransform(FString(shape.reference_frame_link.c_str()), offsetVector, offsetRotator);
+        }
+
+        // Point
+        // First three numbers are the center. 
+        // next number is the size.
+        // Next four numbers are the color in RGBA space.
+        if (shape.type == 0)
+        {
+            FVector location(shape.shape_params[0], shape.shape_params[1], shape.shape_params[2]);
+            float size = shape.shape_params[3];
+            FColor color(static_cast<uint8>(shape.shape_params[4]), static_cast<uint8>(shape.shape_params[5]), static_cast<uint8>(shape.shape_params[6]), static_cast<uint8>(shape.shape_params[7]));
+
+            FVector finalLocation = offsetRotator.RotateVector(location * worldScale) + offsetVector;
+            
+            DrawDebugPoint(world, finalLocation, size, color, persistant, persistSeconds, priority);
+        }
+        // Sphere
+        // First three numbers are the center.
+        // Next number is the radius
+        // Next number is the thickness
+        // Next number is the number of segments
+        // Next four numbers are the color in RGBA space
+        else if (shape.type == 1)
+        {
+            FVector location(shape.shape_params[0], shape.shape_params[1], shape.shape_params[2]);
+            float radius = shape.shape_params[3] * worldScale;
+            float thickness = shape.shape_params[4];
+            int numberOfSegments = static_cast<int>(shape.shape_params[5]);
+            FColor color(static_cast<uint8>(shape.shape_params[6]), static_cast<uint8>(shape.shape_params[7]), static_cast<uint8>(shape.shape_params[8]), static_cast<uint8>(shape.shape_params[9]));
+
+            FVector finalLocation = offsetRotator.RotateVector(location * worldScale) + offsetVector;
+
+            DrawDebugSphere(world, finalLocation, radius, numberOfSegments, color, persistant, persistSeconds, priority, thickness);
+        }
+        // Circle
+        // First three numbers are the center
+        // Next three numbers are the normal
+        // Next number is the radius
+        // Next number is the thickness
+        // Next number is the number of segments
+        // Next four numbers are the color in RGBA space
+        else if (shape.type == 2)
+        {
+            FVector location(shape.shape_params[0], shape.shape_params[1], shape.shape_params[2]);
+            FVector normal(shape.shape_params[3], shape.shape_params[4], shape.shape_params[5]);
+            float radius = shape.shape_params[6] * worldScale;
+            float thickness = shape.shape_params[7];
+            int numberOfSegments = static_cast<int>(shape.shape_params[8]);
+            FColor color(static_cast<uint8>(shape.shape_params[9]), static_cast<uint8>(shape.shape_params[10]), static_cast<uint8>(shape.shape_params[11]), static_cast<uint8>(shape.shape_params[12]));
+
+            FVector finalLocation = offsetRotator.RotateVector(location * worldScale) + offsetVector;
+
+            FVector localY(0, 1, 0);
+            FVector localZ(0, 0, 1);
+
+            FRotator normalRotator = normal.Rotation();
+            FRotator globalRotator = normalRotator + offsetRotator;
+
+            FVector globalY = globalRotator.RotateVector(localY);
+            FVector globalZ = globalRotator.RotateVector(localZ);
+
+            DrawDebugCircle(world, finalLocation, radius, numberOfSegments, color, persistant, persistSeconds, priority, thickness, globalY, globalZ, false);
+        }
+        // Box
+        // First three numbers are the center
+        // Next three numbers are the extents
+        // Next number is the thickness
+        // Next four are the color in RGBA space
+        else if (shape.type == 3)
+        {
+            FVector location(shape.shape_params[0], shape.shape_params[1], shape.shape_params[2]);
+            FVector boxExtents(shape.shape_params[3], shape.shape_params[4], shape.shape_params[5]);
+            float thickness = shape.shape_params[6];
+            FColor color(static_cast<uint8>(shape.shape_params[7]), static_cast<uint8>(shape.shape_params[8]), static_cast<uint8>(shape.shape_params[9]), static_cast<uint8>(shape.shape_params[10]));
+
+            FVector finalLocation = offsetRotator.RotateVector(location * worldScale) + offsetVector;
+
+            boxExtents *= worldScale;
+
+            DrawDebugBox(world, finalLocation, boxExtents, color, persistant, persistSeconds, priority, thickness);
+        }
+        // Line
+        // First three numbers are the first point
+        // Second three numbers are the second point
+        // Next number is the thickness
+        // Next four are the color in RGBA space
+        else if (shape.type == 4)
+        {
+            FVector firstPoint(shape.shape_params[0], shape.shape_params[1], shape.shape_params[2]);
+            FVector secondPoint(shape.shape_params[3], shape.shape_params[4], shape.shape_params[5]);
+            float thickness = shape.shape_params[6];
+            FColor color(static_cast<uint8>(shape.shape_params[7]), static_cast<uint8>(shape.shape_params[8]), static_cast<uint8>(shape.shape_params[9]), static_cast<uint8>(shape.shape_params[10]));
+
+            FVector finalFirstPoint = offsetRotator.RotateVector(firstPoint * worldScale) + offsetVector;
+            FVector finalSecondPoint = offsetRotator.RotateVector(secondPoint * worldScale) + offsetVector;
+
+            DrawDebugLine(world, finalFirstPoint, finalSecondPoint, color, persistant, persistSeconds, priority, thickness);
+        }
+    }
 }
 
 msr::airlib::VehicleApiBase* PawnSimApi::getVehicleApiBase() const

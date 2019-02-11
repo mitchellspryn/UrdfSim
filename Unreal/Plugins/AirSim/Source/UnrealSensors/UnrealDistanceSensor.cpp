@@ -59,7 +59,7 @@ msr::airlib::real_T UnrealDistanceSensor::getRayLength(const msr::airlib::Pose& 
         endVec = endVec * params.max_distance + actorLocationVec;
 
         FHitResult dist_hit = FHitResult(ForceInit);
-        bool isHit = UAirBlueprintLib::GetObstacle(actor_, actorLocationVec, endVec, dist_hit, nullptr, ECC_Visibility, this->ignore_pawn_collision_);
+        bool isHit = UAirBlueprintLib::GetObstacle(actor_, actorLocationVec, endVec, dist_hit, TArray<const AActor*>(), ECC_Visibility, this->ignore_pawn_collision_);
 
         if (isHit)
         {
