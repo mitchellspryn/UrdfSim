@@ -27,11 +27,11 @@ std::unique_ptr<msr::airlib::ApiServerBase> ASimModeComputerVision::createApiSer
 #endif
 }
 
-void ASimModeComputerVision::getExistingVehiclePawns(TArray<IAirSimVehicle*>& pawns) const
+void ASimModeComputerVision::getExistingVehiclePawns(TArray<AirsimVehicle*>& pawns) const
 {
     for (TActorIterator<TVehiclePawn> it(this->GetWorld()); it; ++it)
     {
-        pawns.Add(static_cast<IAirSimVehicle*>(*it));
+        pawns.Add(static_cast<AirsimVehicle*>(*it));
     }
 }
 

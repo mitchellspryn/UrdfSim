@@ -79,11 +79,11 @@ std::unique_ptr<msr::airlib::ApiServerBase> ASimModeUrdfBot::createApiServer() c
 #endif
 }
 
-void ASimModeUrdfBot::getExistingVehiclePawns(TArray<IAirSimVehicle*>& pawns) const
+void ASimModeUrdfBot::getExistingVehiclePawns(TArray<AirsimVehicle*>& pawns) const
 {
     for (TActorIterator<TVehiclePawn> it(this->GetWorld()); it; ++it)
     {
-        pawns.Add(static_cast<IAirSimVehicle*>(*it));
+        pawns.Add(static_cast<AirsimVehicle*>(*it));
     }
 }
 
@@ -125,7 +125,7 @@ void ASimModeUrdfBot::setupVehiclesAndCamera()
 {
     FTransform uu_origin = this->getGlobalNedTransform().getGlobalTransform();
 
-    TArray<IAirSimVehicle*> pawns;
+    TArray<AirsimVehicle*> pawns;
     getExistingVehiclePawns(pawns);
 
     AUrdfBotPawn* fpv_pawn = nullptr;
@@ -170,7 +170,7 @@ void ASimModeUrdfBot::setupVehiclesAndCamera()
     //create API objects for each pawn we have
     this->cameras_.Empty();
     int camera_offset = 0;
-    for (IAirSimVehicle* pawn : pawns) {
+    for (AirsimVehicle* pawn : pawns) {
         //initialize each vehicle pawn we found
         AUrdfBotPawn* vehicle_pawn = static_cast<AUrdfBotPawn*>(pawn);
         vehicle_pawn->InitializeForBeginPlay();

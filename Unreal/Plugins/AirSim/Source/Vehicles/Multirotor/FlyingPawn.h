@@ -8,12 +8,12 @@
 #include "common/common_utils/UniqueValueMap.hpp"
 #include "MultirotorPawnEvents.h"
 
-#include "Vehicles/IAirSimVehicle.h"
+#include "Vehicles/AirSimVehicle.h"
 
 #include "FlyingPawn.generated.h"
 
 UCLASS()
-class AIRSIM_API AFlyingPawn : public APawn, public IAirSimVehicle
+class AIRSIM_API AFlyingPawn : public APawn, public AirsimVehicle
 {
     GENERATED_BODY()
 

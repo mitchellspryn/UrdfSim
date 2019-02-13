@@ -12,13 +12,13 @@
 #include "PIPCamera.h"
 #include "ManualPoseController.h"
 
-#include "Vehicles/IAirSimVehicle.h"
+#include "Vehicles/AirSimVehicle.h"
 
 #include "ComputerVisionPawn.generated.h"
 
 
 UCLASS()
-class AComputerVisionPawn : public APawn, public IAirSimVehicle 
+class AComputerVisionPawn : public APawn, public AirsimVehicle 
 {
     GENERATED_BODY()
 

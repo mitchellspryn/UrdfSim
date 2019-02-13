@@ -31,7 +31,7 @@ class AIRSIM_API ASimModeUrdfBot : public ASimModeBase
         virtual void setupClockSpeed() override;
         virtual std::unique_ptr<msr::airlib::ApiServerBase> createApiServer() const override;
         virtual void setupVehiclesAndCamera() override;
-        virtual void ASimModeUrdfBot::getExistingVehiclePawns(TArray<IAirSimVehicle*>& pawns) const override;
+        virtual void ASimModeUrdfBot::getExistingVehiclePawns(TArray<AirsimVehicle*>& pawns) const override;
 
 
     private:

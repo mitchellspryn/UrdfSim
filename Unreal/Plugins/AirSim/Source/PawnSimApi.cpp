@@ -69,6 +69,7 @@ void PawnSimApi::pawnTick(float dt)
     updateRenderedState(dt);
     updateRendering(dt);
     drawDrawShapes();
+    serviceMoveCameraRequests();
 }
 
 void PawnSimApi::detectUsbRc()
@@ -210,25 +211,44 @@ std::vector<uint8_t> PawnSimApi::getImage(const std::string& camera_name, ImageC
 
 void PawnSimApi::setCameraPose(const msr::airlib::CameraPose camera_pose)
 {
-    auto matchedCamera = this->cameras_.findOrDefault(camera_pose.camera_name, nullptr);
+    //auto matchedCamera = this->cameras_.findOrDefault(camera_pose.camera_name, nullptr);
 
-    if (matchedCamera == nullptr)
-    {
-        return;
-    }
+    //if (matchedCamera == nullptr)
+    //{
+    //    return;
+    //}
 
-    AActor* cameraActor = matchedCamera->GetAttachParentActor();
+    //AActor* cameraActor = matchedCamera->GetAttachParentActor();
 
-    FVector transformVec = FVector(camera_pose.translation.x(), camera_pose.translation.y(), camera_pose.translation.z());
-    transformVec *= UAirBlueprintLib::GetWorldToMetersScale(cameraActor); // API will be specified in meters
+    MoveCameraRequest r;
+    r.camera_name = camera_pose.camera_name;
+    r.transformVec = FVector(camera_pose.translation.x(), camera_pose.translation.y(), camera_pose.translation.z()) * UAirBlueprintLib::GetWorldToMetersScale(getPawn());
     FQuat qq(camera_pose.rotation.x(), camera_pose.rotation.y(), camera_pose.rotation.z(), camera_pose.rotation.w());
-    FRotator rotation = qq.Rotator();
+    r.rotator = qq.Rotator();
 
-    FDetachmentTransformRules detatchRules(EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, true);
-    matchedCamera->DetachFromActor(detatchRules);
-    matchedCamera->SetActorLocation(cameraActor->GetActorLocation() + transformVec);
-    matchedCamera->SetActorRotation(cameraActor->GetActorRotation() + rotation);
-    matchedCamera->AttachToComponent(cameraActor->GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
+    this->move_camera_requests_.Enqueue(r);
+
+    // busy-wait until camera is actually moved
+    FGenericPlatformProcess::ConditionalSleep([&] {return this->move_camera_requests_.IsEmpty(); }, 0.005);
+
+    //FVector transformVec = FVector(camera_pose.translation.x(), camera_pose.translation.y(), camera_pose.translation.z());
+    //transformVec *= UAirBlueprintLib::GetWorldToMetersScale(cameraActor); // API will be specified in meters
+    //FQuat qq(camera_pose.rotation.x(), camera_pose.rotation.y(), camera_pose.rotation.z(), camera_pose.rotation.w());
+    //FRotator rotation = qq.Rotator();
+
+    //FDetachmentTransformRules detatchRules(EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, true);
+    //try
+    //{
+    //    auto ss = cameraActor->GetActorLocation();
+    //    matchedCamera->DetachSceneComponentsFromParent(cameraActor->GetRootComponent(), true);
+    //    matchedCamera->SetActorLocation(cameraActor->GetActorLocation() + transformVec);
+    //    matchedCamera->SetActorRotation(cameraActor->GetActorRotation() + rotation);
+    //    matchedCamera->AttachToComponent(cameraActor->GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
+    //}
+    //catch (std::exception e)
+    //{
+    //    e.what();
+    //}
 }
 
 void PawnSimApi::setRCForceFeedback(float rumble_strength, float auto_center)
@@ -341,6 +361,32 @@ void PawnSimApi::update()
     //kinematics_->update();
 
     VehicleSimApiBase::update();
+}
+
+void PawnSimApi::serviceMoveCameraRequests()
+{
+    while (!this->move_camera_requests_.IsEmpty())
+    {
+        MoveCameraRequest request;
+        this->move_camera_requests_.Dequeue(request);
+
+        auto matchedCamera = this->cameras_.findOrDefault(request.camera_name, nullptr);
+
+        if (matchedCamera == nullptr)
+        {
+            continue;
+        }
+
+        AActor* cameraActor = matchedCamera->GetAttachParentActor();
+
+        FDetachmentTransformRules detatchRules(EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, true);
+        matchedCamera->DetachSceneComponentsFromParent(cameraActor->GetRootComponent(), true);
+        auto a1 = cameraActor->GetActorLocation();
+        auto a2 = cameraActor->GetRootComponent()->GetComponentLocation();
+        matchedCamera->SetActorLocation(cameraActor->GetRootComponent()->GetComponentLocation() + request.transformVec);
+        matchedCamera->SetActorRotation(cameraActor->GetRootComponent()->GetComponentRotation() + request.rotator);
+        matchedCamera->AttachToComponent(cameraActor->GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
+    }
 }
 
 //void playBack()
@@ -578,10 +624,7 @@ void PawnSimApi::setPoseInternal(const Pose& pose, bool ignore_collision)
     state_.collision_info.has_collided = false;
     state_.was_last_move_teleport = enable_teleport;
 
-    if (enable_teleport)
-        params_.vehicle->GetPawn()->SetActorLocationAndRotation(position, orientation, false, nullptr, ETeleportType::TeleportPhysics);
-    else
-        params_.vehicle->GetPawn()->SetActorLocationAndRotation(position, orientation, true);
+    params_.vehicle->TeleportToLocation(position, orientation, enable_teleport);
 
     if (state_.tracing_enabled && (state_.last_position - position).SizeSquared() > 0.25) {
         UKismetSystemLibrary::DrawDebugLine(params_.vehicle->GetPawn()->GetWorld(), state_.last_position, position, FColor::Purple, -1, 3.0f);

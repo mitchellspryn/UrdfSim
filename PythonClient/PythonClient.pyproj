@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>e2049e20-b6dd-474e-8bca-1c8dc54725aa</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>urdfbot\ShapeDrawTest.py</StartupFile>
+    <StartupFile>urdfbot\GenerateImageTrainingSet.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -124,6 +124,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="urdfbot\ClientUtil.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="urdfbot\GenerateImageTrainingSet.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="urdfbot\LunabotClient.py">

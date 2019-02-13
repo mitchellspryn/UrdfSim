@@ -19,7 +19,7 @@
 #include "api/VehicleSimApiBase.hpp"
 #include "common/common_utils/UniqueValueMap.hpp"
 
-#include "Vehicles/IAirsimVehicle.h"
+#include "Vehicles/AirsimVehicle.h"
 
 
 #include "PawnEvents.h"
@@ -38,7 +38,7 @@ public: //types
     typedef msr::airlib::ImageCaptureBase ImageCaptureBase;
 
     struct Params {
-        IAirSimVehicle* vehicle; 
+        AirsimVehicle* vehicle; 
         const NedTransform* global_transform;
         PawnEvents* pawn_events;
         common_utils::UniqueValueMap<std::string, APIPCamera*> cameras;
@@ -51,7 +51,7 @@ public: //types
         {
         }
 
-        Params(IAirSimVehicle* pawn_val, const NedTransform* global_transform_val, PawnEvents* pawn_events_val,
+        Params(AirsimVehicle* pawn_val, const NedTransform* global_transform_val, PawnEvents* pawn_events_val,
             const common_utils::UniqueValueMap<std::string, APIPCamera*> cameras_val, UClass* pip_camera_class_val,
             UParticleSystem* collision_display_template_val, const msr::airlib::GeoPoint home_geopoint_val,
             std::string vehicle_name_val)
@@ -146,6 +146,7 @@ private: //methods
     void updateKinematics(float dt);
     void setStartPosition(const FVector& position, const FRotator& rotator);
     void drawDrawShapes();
+    void serviceMoveCameraRequests();
 
 private: //vars
     typedef msr::airlib::AirSimSettings AirSimSettings;
@@ -185,6 +186,14 @@ private: //vars
         FVector ground_offset;
         FVector transformation_offset;
     };
+
+    struct MoveCameraRequest {
+        std::string camera_name;
+        FVector transformVec;
+        FRotator rotator;
+    };
+
+    TQueue<MoveCameraRequest> move_camera_requests_;
     
     State state_, initial_state_;
 

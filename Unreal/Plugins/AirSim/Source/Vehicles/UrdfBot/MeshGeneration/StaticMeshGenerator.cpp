@@ -12,7 +12,7 @@ bool StaticMeshGenerator::Initialize(UStaticMesh* boxTemplateMesh, UStaticMesh* 
 
 bool StaticMeshGenerator::CreateUnscaledMeshForLink(FString linkName, UrdfGeometry* visualGeometry, UrdfGeometry* collisionGeometry, APawn* outer, AUrdfLink* link)
 {
-    FName collisionName = FName((linkName + "_collision").GetCharArray().GetData());
+    FName collisionName = FName((linkName + TEXT("_collision")).GetCharArray().GetData());
 
     UrdfBox* boxSpecification = nullptr;
     UrdfCylinder* cylinderSpecification = nullptr;

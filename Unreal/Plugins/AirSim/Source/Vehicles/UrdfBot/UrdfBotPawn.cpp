@@ -237,6 +237,16 @@ TMap<FString, ControlledMotionComponent*> AUrdfBotPawn::GetControlledMotionCompo
     return this->controlled_motion_components_;
 }
 
+void AUrdfBotPawn::TeleportToLocation(FVector position, FQuat orientation, bool teleport)
+{
+    FVector translation = (position * UAirBlueprintLib::GetWorldToMetersScale(this)) - this->GetActorLocation();
+    FRotator rotation = (orientation * this->GetActorQuat().Inverse()).Rotator();
+
+    this->MoveAllComponents(translation, rotation);
+
+    AirsimVehicle::TeleportToLocation(position * UAirBlueprintLib::GetWorldToMetersScale(this), orientation, teleport);
+}
+
 USceneComponent* AUrdfBotPawn::GetComponent(FString componentName)
 {
     // For debug
@@ -361,6 +371,7 @@ AUrdfLink* AUrdfBotPawn::CreateLinkFromSpecification(const UrdfLinkSpecification
 
     link->SetMass(linkSpecification.InertialSpecification->Mass);
     link->SetOwningActor(this);
+    auto ww = link->GetName();
 
     return link;
 }
@@ -800,5 +811,17 @@ void AUrdfBotPawn::DrawDebug()
         {
             throw std::runtime_error("Unrecognized joint type in DrawDebug()");
         }
+    }
+}
+
+void AUrdfBotPawn::MoveAllComponents(FVector translation, FRotator rotation)
+{
+    for (auto kvp : this->components_)
+    {
+        AUrdfLink* component = kvp.Value;
+        FVector componentLocation = component->GetActorLocation();
+        FRotator actorRotation = component->GetActorRotation();
+
+        component->SetActorLocationAndRotation(translation + componentLocation, rotation + actorRotation);
     }
 }

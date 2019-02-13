@@ -15,7 +15,7 @@
 #include "PawnSimApi.h"
 #include "common/StateReporterWrapper.hpp"
 
-#include "Vehicles/IAirSimVehicle.h"
+#include "Vehicles/AirSimVehicle.h"
 
 #include "SimModeBase.generated.h"
 
@@ -83,7 +83,7 @@ protected: //must overrides
     typedef msr::airlib::AirSimSettings AirSimSettings;
 
     virtual std::unique_ptr<msr::airlib::ApiServerBase> createApiServer() const;
-    virtual void getExistingVehiclePawns(TArray<IAirSimVehicle*>& pawns) const;
+    virtual void getExistingVehiclePawns(TArray<AirsimVehicle*>& pawns) const;
     virtual bool isVehicleTypeSupported(const std::string& vehicle_type) const;
     virtual std::string getVehiclePawnPathName(const AirSimSettings::VehicleSetting& vehicle_setting) const;
     virtual PawnEvents* getVehiclePawnEvents(APawn* pawn) const;

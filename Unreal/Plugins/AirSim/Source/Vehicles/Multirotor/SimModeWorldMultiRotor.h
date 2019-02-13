@@ -6,7 +6,7 @@
 #include "common/Common.hpp"
 #include "SimMode/SimModeWorldBase.h"
 #include "api/VehicleSimApiBase.hpp"
-#include "Vehicles/IAirSimVehicle.h"
+#include "Vehicles/AirSimVehicle.h"
 #include "Runtime/Engine/Public/EngineUtils.h"
 #include "SimModeWorldMultiRotor.generated.h"
 
@@ -23,7 +23,7 @@ public:
 protected: //overrides
     virtual void setupClockSpeed() override;
     virtual std::unique_ptr<msr::airlib::ApiServerBase> createApiServer() const override;
-    virtual void getExistingVehiclePawns(TArray<IAirSimVehicle*>& pawns) const override;
+    virtual void getExistingVehiclePawns(TArray<AirsimVehicle*>& pawns) const override;
     virtual bool isVehicleTypeSupported(const std::string& vehicle_type) const override;
     virtual std::string getVehiclePawnPathName(const AirSimSettings::VehicleSetting& vehicle_setting) const override;
     virtual PawnEvents* getVehiclePawnEvents(APawn* pawn) const override;

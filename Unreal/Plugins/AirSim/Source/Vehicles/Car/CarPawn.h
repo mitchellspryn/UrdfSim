@@ -16,7 +16,7 @@
 #include "PawnEvents.h"
 #include "PIPCamera.h"
 
-#include "Vehicles/IAirSimVehicle.h"
+#include "Vehicles/AirSimVehicle.h"
 
 #include "CarPawn.generated.h"
 
@@ -28,7 +28,7 @@ class UInputComponent;
 class UAudioComponent;
 
 UCLASS(config = Game)
-class ACarPawn : public AWheeledVehicle, public IAirSimVehicle
+class ACarPawn : public AWheeledVehicle, public AirsimVehicle
 {
     GENERATED_BODY()
 

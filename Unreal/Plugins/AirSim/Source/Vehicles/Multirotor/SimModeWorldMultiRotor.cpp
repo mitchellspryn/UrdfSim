@@ -87,11 +87,11 @@ std::unique_ptr<msr::airlib::ApiServerBase> ASimModeWorldMultiRotor::createApiSe
 #endif
 }
 
-void ASimModeWorldMultiRotor::getExistingVehiclePawns(TArray<IAirSimVehicle*>& pawns) const
+void ASimModeWorldMultiRotor::getExistingVehiclePawns(TArray<AirsimVehicle*>& pawns) const
 {
     for (TActorIterator<TVehiclePawn> it(this->GetWorld()); it; ++it)
     {
-        pawns.Add(static_cast<IAirSimVehicle*>(*it));
+        pawns.Add(static_cast<AirsimVehicle*>(*it));
     }
 }
 

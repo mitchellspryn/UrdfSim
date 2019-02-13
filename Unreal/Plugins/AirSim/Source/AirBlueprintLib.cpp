@@ -19,6 +19,7 @@
 #include "IImageWrapper.h"
 #include "ObjectThumbnail.h"
 #include "Engine/Engine.h"
+#include "ProceduralMeshComponent.h"
 #include <exception>
 #include "common/common_utils/Utils.hpp"
 
@@ -282,9 +283,28 @@ std::string UAirBlueprintLib::GetMeshName(ALandscapeProxy* mesh)
     return std::string(TCHAR_TO_UTF8(*(mesh->GetName())));
 }
 
+std::string UAirBlueprintLib::GetMeshName(UProceduralMeshComponent* meshComponent)
+{
+    switch (mesh_naming_method_)
+    {
+    case msr::airlib::AirSimSettings::SegmentationSetting::MeshNamingMethodType::OwnerName:
+        if (meshComponent->GetOwner())
+            return std::string(TCHAR_TO_UTF8(*(meshComponent->GetOwner()->GetName())));
+        else
+            return ""; //std::string(TCHAR_TO_UTF8(*(UKismetSystemLibrary::GetDisplayName(mesh))));
+    case msr::airlib::AirSimSettings::SegmentationSetting::MeshNamingMethodType::StaticMeshName:
+        if (meshComponent)
+            return std::string(TCHAR_TO_UTF8(*(meshComponent->GetName())));
+        else
+            return "";
+    default:
+        return "";
+    }
+}
+
 void UAirBlueprintLib::InitializeMeshStencilIDs(bool ignore_existing)
 {
-    for (TObjectIterator<UStaticMeshComponent> comp; comp; ++comp)
+    for (TObjectIterator<UMeshComponent> comp; comp; ++comp)
     {
         InitializeObjectStencilID(*comp, ignore_existing);
     }
@@ -311,7 +331,7 @@ bool UAirBlueprintLib::SetMeshStencilID(const std::string& mesh_name, int object
         name_regex.assign(mesh_name, std::regex_constants::icase);
 
     int changes = 0;
-    for (TObjectIterator<UStaticMeshComponent> comp; comp; ++comp)
+    for (TObjectIterator<UMeshComponent> comp; comp; ++comp)
     {
         SetObjectStencilIDIfMatch(*comp, object_id, mesh_name, is_name_regex, name_regex, changes);
     }
@@ -320,6 +340,10 @@ bool UAirBlueprintLib::SetMeshStencilID(const std::string& mesh_name, int object
         SetObjectStencilIDIfMatch(*comp, object_id, mesh_name, is_name_regex, name_regex, changes);
     }
     for (TObjectIterator<ALandscapeProxy> comp; comp; ++comp)
+    {
+        SetObjectStencilIDIfMatch(*comp, object_id, mesh_name, is_name_regex, name_regex, changes);
+    }
+    for (TObjectIterator<UProceduralMeshComponent> comp; comp; ++comp)
     {
         SetObjectStencilIDIfMatch(*comp, object_id, mesh_name, is_name_regex, name_regex, changes);
     }
@@ -334,7 +358,7 @@ int UAirBlueprintLib::GetMeshStencilID(const std::string& mesh_name)
     {
         // Access the subclass instance with the * or -> operators.
         UMeshComponent *mesh = *comp;
-        if (mesh->GetName() == fmesh_name) {
+        if (mesh->GetName() == fmesh_name || mesh->GetName() == (fmesh_name + "_visual")) {
             return mesh->CustomDepthStencilValue;
         }
     }

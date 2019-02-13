@@ -15,6 +15,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetStringLibrary.h"
 #include "Engine/World.h"
+#include "ProceduralMeshComponent.h"
 
 #include "Runtime/Landscape/Classes/LandscapeComponent.h"
 #include "common/AirSimSettings.hpp"
@@ -100,8 +101,8 @@ public:
             else
                 return ""; //std::string(TCHAR_TO_UTF8(*(UKismetSystemLibrary::GetDisplayName(mesh))));
         case msr::airlib::AirSimSettings::SegmentationSetting::MeshNamingMethodType::StaticMeshName:
-            if (mesh->GetStaticMesh())
-                return std::string(TCHAR_TO_UTF8(*(mesh->GetStaticMesh()->GetName())));
+            if (mesh)
+                return std::string(TCHAR_TO_UTF8(*(mesh->GetName())));
             else
                 return "";
         default:
@@ -110,6 +111,7 @@ public:
     }
 
     static std::string GetMeshName(ALandscapeProxy* mesh);
+    static std::string GetMeshName(UProceduralMeshComponent* meshComponent);
 
     template<class UserClass>
     static FInputActionBinding& BindActionToKey(const FName action_name, const FKey in_key, UserClass* actor,
@@ -211,7 +213,7 @@ private:
         std::string comp_mesh_name = GetMeshName(mesh);
         if (comp_mesh_name == "")
             return;
-        bool is_match = (!is_name_regex && (comp_mesh_name == mesh_name))
+        bool is_match = (!is_name_regex && (comp_mesh_name == mesh_name || comp_mesh_name == (mesh_name + "_visual")))
             || (is_name_regex && std::regex_match(comp_mesh_name, name_regex));
         if (is_match) {
             ++changes;

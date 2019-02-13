@@ -440,7 +440,7 @@ void ASimModeBase::setupVehiclesAndCamera()
 
     //find all vehicle pawns
     {
-        TArray<IAirSimVehicle*> pawns;
+        TArray<AirsimVehicle*> pawns;
         getExistingVehiclePawns(pawns);
 
         APawn* fpv_pawn = nullptr;
@@ -472,7 +472,7 @@ void ASimModeBase::setupVehiclesAndCamera()
                 AActor* spawned_actor = static_cast<AActor*>( this->GetWorld()->SpawnActor(
                     vehicle_bp_class, &spawn_position, &spawn_rotation, pawn_spawn_params));
 
-                IAirSimVehicle* spawned_pawn = dynamic_cast<IAirSimVehicle*>(spawned_actor);
+                AirsimVehicle* spawned_pawn = dynamic_cast<AirsimVehicle*>(spawned_actor);
 
                 spawned_actors_.Add(spawned_pawn->GetPawn());
                 pawns.Add(spawned_pawn);
@@ -483,9 +483,9 @@ void ASimModeBase::setupVehiclesAndCamera()
         }
 
         //create API objects for each pawn we have
-        for (IAirSimVehicle* pawn : pawns)
+        for (AirsimVehicle* pawn : pawns)
         {
-            IAirSimVehicle* vehicle_pawn = static_cast<IAirSimVehicle*>(pawn);
+            AirsimVehicle* vehicle_pawn = static_cast<AirsimVehicle*>(pawn);
 
             initializeVehiclePawn(vehicle_pawn->GetPawn());
 
@@ -522,7 +522,7 @@ void ASimModeBase::setupVehiclesAndCamera()
     checkVehicleReady();
 }
 
-void ASimModeBase::getExistingVehiclePawns(TArray<IAirSimVehicle*>& pawns) const
+void ASimModeBase::getExistingVehiclePawns(TArray<AirsimVehicle*>& pawns) const
 {
     //derived class should override this method to retrieve types of pawns they support
 }

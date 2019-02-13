@@ -31,7 +31,7 @@
 
 #include "PawnEvents.h"
 
-#include "Vehicles/IAirsimVehicle.h"
+#include "Vehicles/AirsimVehicle.h"
 
 #include "PhysXIncludes.h"
 #include "PhysicsPublic.h"
@@ -40,7 +40,7 @@
 #include "UrdfBotPawn.generated.h"
 
 UCLASS()
-class AUrdfBotPawn : public APawn, public IAirSimVehicle
+class AUrdfBotPawn : public APawn, public AirsimVehicle
 {
     GENERATED_BODY()
 
@@ -71,6 +71,8 @@ class AUrdfBotPawn : public APawn, public IAirSimVehicle
         virtual void GetComponentReferenceTransform(FString componentName, FVector& translation, FRotator& rotation) override;
         virtual bool PawnUsesNedCoords() override { return false; }
 
+        virtual void TeleportToLocation(FVector position, FQuat orientation, bool teleport) override;
+
     private:
         typedef msr::airlib::AirSimSettings AirSimSettings;
 
@@ -93,6 +95,7 @@ class AUrdfBotPawn : public APawn, public IAirSimVehicle
         FVector MoveChildLinkForLimitedXAxisMotion(AUrdfLink* parentLink, AUrdfLink* childLink, const UrdfJointSpecification &jointSpecification);
 
         void DrawDebug();
+        void MoveAllComponents(FVector translation, FRotator rotation);
 
         UPROPERTY()
         TMap<FString, AUrdfLink*> components_;
