@@ -107,9 +107,9 @@ public:
         reporter.writeValue("GPS-Epv", output_.gnss.epv);
     }
 
-    virtual const std::map<std::string, float> read() const override
+    virtual const std::map<std::string, double> read() const override
     {
-        std::map<std::string, float> values;
+        std::map<std::string, double> values;
         auto& output = this->getOutput();
 
         values["GPS-Loc-latitude"] = output.gnss.geo_point.latitude;
@@ -121,7 +121,12 @@ public:
         values["GPS-Eph"] = output.gnss.eph;
         values["GPS-Epv"] = output.gnss.epv;
         values["GPS-fix-type"] = output.gnss.fix_type;
-        values["GPS-time-utc"] = output.gnss.time_utc;
+
+        // Marshall bits into double
+        double marshalled_time;
+        memcpy(&marshalled_time, &output.gnss.time_utc, sizeof(output.gnss.time_utc));
+        values["GPS-time-utc"] = marshalled_time;
+
         values["GPS-IsValid"] = output.is_valid ? 1.0f : 0.0f;
 
         return values;

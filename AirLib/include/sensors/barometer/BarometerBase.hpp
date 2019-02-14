@@ -34,9 +34,9 @@ public:
         reporter.writeValue("Baro-Prs", output_.pressure);
     }
 
-    virtual const std::map<std::string, float> read() const override
+    virtual const std::map<std::string, double> read() const override
     {
-        std::map<std::string, float> values;
+        std::map<std::string, double> values;
         auto& output = this->getOutput();
 
         values["Baro-Alt"] = output.altitude;

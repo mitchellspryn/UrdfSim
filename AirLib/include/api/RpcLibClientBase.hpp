@@ -10,6 +10,8 @@
 #include "physics/Kinematics.hpp"
 #include "physics/Environment.hpp"
 
+#include <map>
+
 namespace msr { namespace airlib {
 
 //common methods for RCP clients of different vehicles
@@ -47,7 +49,7 @@ public:
     int simGetSegmentationObjectID(const std::string& mesh_name) const;
     void simPrintLogMessage(const std::string& message, std::string message_param = "", unsigned char severity = 0);
 
-    std::map<std::string, std::map<std::string, float> > readSensors(const std::string vehicle_name = "");
+    std::map<std::string, std::map<std::string, double> > readSensors(const std::string vehicle_name = "");
     msr::airlib::RayCastResponse simRayCast(const msr::airlib::RayCastRequest request, const std::string vehicle_name = "");
     void simSetDrawableShapes(const msr::airlib::DrawableShapeRequest request, const std::string vehicle_name = "");
 

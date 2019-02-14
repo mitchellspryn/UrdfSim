@@ -5,6 +5,7 @@
 #define msr_airlib_SensorCollection_hpp
 
 #include <unordered_map>
+#include <map>
 #include "sensors/SensorBase.hpp"
 #include "common/UpdatableContainer.hpp"
 #include "common/Common.hpp"
@@ -76,7 +77,7 @@ public:
             return 0;
         }
         else {
-            return it->second.size();
+            return static_cast<uint>(it->second.size());
         }
     }
 
@@ -133,12 +134,12 @@ public:
 
     //*** End: UpdatableState implementation ***//
 
-    virtual std::map<std::string, std::map<std::string, float> > getReadings() const
+    virtual std::map<std::string, std::map<std::string, double> > getReadings() const
     {
-        std::map<std::string, std::map<std::string, float> > readings;
+        std::map<std::string, std::map<std::string, double> > readings;
         for (auto &kvp : this->sensors_)
         {
-            std::map<std::string, float> reading;
+            std::map<std::string, double> reading;
             std::string sensor_name = kvp.first;
             for (auto iter = kvp.second.get()->begin(); iter != kvp.second.get()->end(); ++iter)
             {

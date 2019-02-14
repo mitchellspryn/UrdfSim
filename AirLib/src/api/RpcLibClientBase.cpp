@@ -217,7 +217,7 @@ void RpcLibClientBase::simPrintLogMessage(const std::string& message, std::strin
     pimpl_->client.call("simPrintLogMessage", message, message_param, severity);
 }
 
-std::map<std::string, std::map<std::string, float> > RpcLibClientBase::readSensors(const std::string vehicle_name)
+std::map<std::string, std::map<std::string, double> > RpcLibClientBase::readSensors(const std::string vehicle_name)
 {
     return pimpl_->client.call("readSensors", vehicle_name).as<msr::airlib_rpclib::RpcLibAdapatorsBase::SensorReadings>().readings;
 }

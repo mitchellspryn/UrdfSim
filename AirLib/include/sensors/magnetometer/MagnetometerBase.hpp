@@ -32,9 +32,9 @@ public:
         reporter.writeValue("Mag-Vec", output_.magnetic_field_body);
     }
 
-    virtual const std::map<std::string, float> read() const override
+    virtual const std::map<std::string, double> read() const override
     {
-        std::map<std::string, float> values;
+        std::map<std::string, double> values;
         auto& output = this->getOutput();
 
         values["Mag-Vec-x"] = output.magnetic_field_body.x();

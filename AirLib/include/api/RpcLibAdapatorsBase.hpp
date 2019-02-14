@@ -514,7 +514,7 @@ public:
     };
 
     struct SensorReadings {
-        std::map<std::string, std::map<std::string, float> > readings;
+        std::map<std::string, std::map<std::string, double> > readings;
 
         MSGPACK_DEFINE_MAP(readings);
 

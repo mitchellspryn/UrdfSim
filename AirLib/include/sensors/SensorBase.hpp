@@ -10,6 +10,7 @@
 #include "physics/Environment.hpp"
 #include "physics/Kinematics.hpp"
 
+#include <map>
 
 namespace msr { namespace airlib {
 
@@ -60,9 +61,9 @@ public:
         return attach_link_name_;
     }
 
-    virtual const std::map<std::string, float> read() const
+    virtual const std::map<std::string, double> read() const
     {
-        return std::map<std::string, float>();
+        return std::map<std::string, double>();
     }
 
     virtual ~SensorBase() = default;

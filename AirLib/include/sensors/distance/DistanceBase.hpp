@@ -34,10 +34,9 @@ public:
         reporter.writeValue("Dist-Curr", output_.distance);
     }
 
-    virtual const std::map<std::string, float> read() const override
+    virtual const std::map<std::string, double> read() const override
     {
-        std::map<std::string, float> values;
-        auto& output = this->getOutput();
+        std::map<std::string, double> values;
 
         values["Dist-Curr"] = output_.distance;
         values["Max-Distance"] = output_.max_distance;

@@ -35,10 +35,10 @@ public:
         reporter.writeValue("IMU-Lin", output_.linear_acceleration);
     }
 
-    virtual const std::map<std::string, float> read() const override
+    virtual const std::map<std::string, double> read() const override
     {
         auto output = this->getOutput();
-        std::map<std::string, float> values;
+        std::map<std::string, double> values;
         values["IMU-Ang-pitch"] = output.angular_velocity.x();
         values["IMU-Ang-roll"] = output.angular_velocity.y();
         values["IMU-Ang-yaw"] = output.angular_velocity.z();
