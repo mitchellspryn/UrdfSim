@@ -121,7 +121,7 @@ class AUrdfBotPawn : public APawn, public AirsimVehicle
         USceneComponent* rootComponent_;
 
         UPROPERTY()
-        TMap<FString, UMaterial*> materials_;
+        TMap<FString, UMaterialInterface*> materials_;
 
         UPROPERTY()
         TMap<FString, UStaticMesh*> user_static_meshes_;

@@ -593,7 +593,7 @@ public:
     //implements relative method - do not use for comparing with zero
     //use this most of the time, tolerance needs to be meaningful in your context
     template<typename TReal>
-    static bool isApproximatelyEqual(TReal a, TReal b, TReal tolerance = epsilon<TReal>())
+    static bool isApproximatelyEqual(TReal a, TReal b, TReal tolerance = std::numeric_limits<TReal>::epsilon())
     {
         TReal diff = std::fabs(a - b);
         if (diff <= tolerance)

@@ -78,7 +78,7 @@ class UrdfJointSpecification
         UrdfJointMimicSpecification* Mimic = nullptr;
         UrdfJointSafetyControllerSpecification* SafetyController = nullptr;
 
-        static UrdfJointType UrdfJointSpecification::ParseJointType(FString type)
+        static UrdfJointType ParseJointType(FString type)
         {
             if (type.Equals(TEXT("revolute")))
                 return REVOLUTE_TYPE;
