@@ -13,6 +13,7 @@
 UENUM(BlueprintType)
 enum class ECameraDirectorMode : uint8
 {
+    CAMERA_DIRECTOR_MODE_UNUSED = 0 UMETA(Displayname = "Unused"),
     CAMERA_DIRECTOR_MODE_FPV = 1	UMETA(DisplayName = "FPV"),
     CAMERA_DIRECTOR_MODE_GROUND_OBSERVER = 2	UMETA(DisplayName = "GroundObserver"),
     CAMERA_DIRECTOR_MODE_FLY_WITH_ME = 3	UMETA(DisplayName = "FlyWithMe"),

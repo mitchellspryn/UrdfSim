@@ -79,6 +79,8 @@ public:
         return static_cast<PawnSimApi*>(api_provider_->getVehicleSimApi(vehicle_name));
     }
 
+    virtual bool isUrdf() { return false; }
+
 protected: //must overrides
     typedef msr::airlib::AirSimSettings AirSimSettings;
 

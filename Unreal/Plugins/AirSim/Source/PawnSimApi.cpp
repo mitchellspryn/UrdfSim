@@ -380,7 +380,9 @@ void PawnSimApi::serviceMoveCameraRequests()
         AActor* cameraActor = matchedCamera->GetAttachParentActor();
 
         FDetachmentTransformRules detatchRules(EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, true);
-        matchedCamera->DetachSceneComponentsFromParent(cameraActor->GetRootComponent(), true);
+        matchedCamera->DetachAllSceneComponents(cameraActor->GetRootComponent(), detatchRules);
+        matchedCamera->DetachFromActor(detatchRules);
+        //matchedCamera->DetachSceneComponentsFromParent(cameraActor->GetRootComponent(), true);
         auto a1 = cameraActor->GetActorLocation();
         auto a2 = cameraActor->GetRootComponent()->GetComponentLocation();
         matchedCamera->SetActorLocation(cameraActor->GetRootComponent()->GetComponentLocation() + request.transformVec);

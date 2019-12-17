@@ -40,6 +40,8 @@ public:
 
     Pose simGetObjectPose(const std::string& object_name) const;
     bool simSetObjectPose(const std::string& object_name, const Pose& pose, bool teleport = true);
+    bool simSpawnStaticMeshObject(const std::string& object_class_name, const std::string& object_class, const Pose& pose);
+    bool simDeleteObject(const std::string& object_name);
     
     //task management APIs
     void cancelLastTask(const std::string& vehicle_name = "");

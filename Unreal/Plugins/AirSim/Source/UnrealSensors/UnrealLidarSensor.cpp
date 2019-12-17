@@ -95,7 +95,7 @@ void UnrealLidarSensor::getPointCloud(const msr::airlib::Pose& lidar_pose, const
             FVector(start.x(), start.y(), start.z()),
             5,                       //size
             FColor::Blue,
-            true,                    //persistent (never goes away)
+            false,                    //persistent (never goes away)
             0.1                      //point leaves a trail on moving object
         );
     }
@@ -204,7 +204,7 @@ bool UnrealLidarSensor::shootLaser(const msr::airlib::Pose& lidar_pose, const ms
                     hit_result.ImpactPoint,
                     5,                       //size
                     FColor::Red,
-                    true,                    //persistent (never goes away)
+                    false,                    //persistent (never goes away)
                     0.1                      //point leaves a trail on moving object
                 );
             }
@@ -236,7 +236,7 @@ bool UnrealLidarSensor::shootLaser(const msr::airlib::Pose& lidar_pose, const ms
                 endVec,
                 5,                       //size
                 FColor::Green,
-                true,                    //persistent (never goes away)
+                false,                    //persistent (never goes away)
                 0.1                      //point leaves a trail on moving object
             );
         }

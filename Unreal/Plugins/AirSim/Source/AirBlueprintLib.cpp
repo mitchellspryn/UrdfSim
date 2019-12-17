@@ -124,15 +124,15 @@ void UAirBlueprintLib::enableViewportRendering(AActor* context, bool enable)
         // Do this only if the main viewport is not being rendered anyway in case there are
         // any adverse performance effects during main rendering.
         //HACK: FViewPort doesn't expose this field so we are doing dirty work around by maintaining count by ourselves
-        if (flush_on_draw_count_ == 0)
-            viewport->GetGameViewport()->IncrementFlushOnDraw();
+        //if (flush_on_draw_count_ == 0)
+        //    viewport->GetGameViewport()->IncrementFlushOnDraw();
     }
     else {
         viewport->EngineShowFlags.SetRendering(true);
 
         //HACK: FViewPort doesn't expose this field so we are doing dirty work around by maintaining count by ourselves
-        if (flush_on_draw_count_ > 0)
-            viewport->GetGameViewport()->DecrementFlushOnDraw();
+        //if (flush_on_draw_count_ > 0)
+        //    viewport->GetGameViewport()->DecrementFlushOnDraw();
     }
 }
 

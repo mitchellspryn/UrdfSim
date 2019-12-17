@@ -373,6 +373,14 @@ bool RpcLibClientBase::simSetObjectPose(const std::string& object_name, const ms
 {
     return pimpl_->client.call("simSetObjectPose", object_name, RpcLibAdapatorsBase::Pose(pose), teleport).as<bool>();
 }
+bool RpcLibClientBase::simSpawnStaticMeshObject(const std::string& object_class_name, const std::string& object_name, const msr::airlib::Pose& pose)
+{
+    return pimpl_->client.call("simSpawnStaticMeshObject", object_class_name, object_name, RpcLibAdapatorsBase::Pose(pose)).as<bool>();
+}
+bool RpcLibClientBase::simDeleteObject(const std::string& object_name)
+{
+    return pimpl_->client.call("simDeleteObject", object_name).as<bool>();
+}
 
 CameraInfo RpcLibClientBase::simGetCameraInfo(const std::string& camera_name, const std::string& vehicle_name) const
 {

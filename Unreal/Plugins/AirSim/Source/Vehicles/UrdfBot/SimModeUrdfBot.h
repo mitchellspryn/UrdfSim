@@ -27,11 +27,13 @@ class AIRSIM_API ASimModeUrdfBot : public ASimModeBase
         virtual void pause(bool is_paused) override;
         virtual void continueForTime(double seconds) override;
 
+        virtual bool isUrdf() override { return true; }
+
     protected:
         virtual void setupClockSpeed() override;
         virtual std::unique_ptr<msr::airlib::ApiServerBase> createApiServer() const override;
         virtual void setupVehiclesAndCamera() override;
-        virtual void ASimModeUrdfBot::getExistingVehiclePawns(TArray<AirsimVehicle*>& pawns) const override;
+        virtual void getExistingVehiclePawns(TArray<AirsimVehicle*>& pawns) const override;
 
 
     private:
