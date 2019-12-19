@@ -304,10 +304,8 @@ std::string UAirBlueprintLib::GetMeshName(UProceduralMeshComponent* meshComponen
 
 void UAirBlueprintLib::InitializeMeshStencilIDs(bool ignore_existing)
 {
-    int i = 0;
     for (TObjectIterator<UMeshComponent> comp; comp; ++comp)
     {
-        i++;
         InitializeObjectStencilID(*comp, ignore_existing);
     }
     for (TObjectIterator<USkinnedMeshComponent> comp; comp; ++comp)

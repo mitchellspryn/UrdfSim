@@ -104,10 +104,19 @@ public:
                 auto owner = mesh->GetOwner();
                 if (owner->GetName().StartsWith("InstancedFoliageActor"))
                 {
-                    return std::string(TCHAR_TO_UTF8(*(mesh->GetName())));
+                    FString meshName = mesh->GetName();
+
+                    // It is expected that the user will create a blueprint class that starts with "IFA_" for each of the classes they want to differentiate.
+                    // Unreal adds a _C_ into the name for blueprint created classes, which messes up the hash. Remove it as well. 
+                    if (meshName.StartsWith(TEXT("IFA_")))
+                    {
+                        meshName = meshName.Replace(TEXT("IFA_"), TEXT("")).Replace(TEXT("_C_"), TEXT(""));
+                    }
+
+                    return std::string(TCHAR_TO_UTF8(*(meshName)));
                 }
 
-                return std::string(TCHAR_TO_UTF8(*(mesh->GetOwner()->GetName())));
+                return std::string(TCHAR_TO_UTF8(*(owner->GetName())));
             }
             else
                 return ""; //std::string(TCHAR_TO_UTF8(*(UKismetSystemLibrary::GetDisplayName(mesh))));
