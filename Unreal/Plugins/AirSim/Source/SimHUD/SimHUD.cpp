@@ -1,5 +1,5 @@
 #include "SimHUD.h"
-#include "ConstructorHelpers.h"
+#include "Runtime/CoreUObject/Public/UObject/ConstructorHelpers.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Misc/FileHelper.h"
 

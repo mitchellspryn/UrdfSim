@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 #include "DirectInputJoystick.h"
-#include "UnrealMathUtility.h"
+#include "Runtime/Core/Public/Math/UnrealMathUtility.h"
 
 #if defined _WIN32 || defined _WIN64
 

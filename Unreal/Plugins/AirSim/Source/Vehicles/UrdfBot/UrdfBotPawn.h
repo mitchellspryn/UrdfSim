@@ -12,7 +12,7 @@
 #include "Runtime/Engine/Classes/PhysicsEngine/PhysicsConstraintComponent.h"
 #include "Runtime/Engine/Classes/PhysicsEngine/ConstraintInstance.h"
 #include "Runtime/Engine/Classes/Engine/StaticMesh.h"
-#include "Regex.h"
+#include "Runtime/Core/Public/Internationalization/Regex.h"
 
 #include "PIPCamera.h"
 #include "common/common_utils/UniqueValueMap.hpp"

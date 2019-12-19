@@ -1,7 +1,7 @@
 #include "RenderRequest.h"
 #include "TextureResource.h"
 #include "Engine/TextureRenderTarget2D.h"
-#include "TaskGraphInterfaces.h"
+#include "Runtime/Core/Public/Async/TaskGraphInterfaces.h"
 #include "ImageUtils.h"
 
 #include "AirBlueprintLib.h"

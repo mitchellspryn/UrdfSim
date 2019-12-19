@@ -6,9 +6,9 @@
 //following is required to support Unreal Build System
 #if (defined _WIN32 || defined _WIN64) && (defined UE_GAME || defined UE_EDITOR)
 #include "CoreTypes.h"
-#include "PreWindowsApi.h"
-#include "AllowWindowsPlatformTypes.h"
-#include "AllowWindowsPlatformAtomics.h"
+#include "Runtime/Core/Public/Windows/PreWindowsApi.h"
+#include "Runtime/Core/Public/Windows/AllowWindowsPlatformTypes.h"
+#include "Runtime/Core/Public/Windows/AllowWindowsPlatformAtomics.h"
 //remove warnings for VC++
 #pragma warning(push)
 #pragma warning(disable:4191 6000 28251)

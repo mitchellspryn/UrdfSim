@@ -9,15 +9,15 @@
 #include "Components/StaticMeshComponent.h"
 #include "EngineUtils.h"
 #include "Runtime/Engine/Classes/Engine/StaticMesh.h"
-#include "UObjectIterator.h"
+#include "Runtime/CoreUObject/Public/UObject/UObjectIterator.h"
 #include "Camera/CameraComponent.h"
 //#include "Runtime/Foliage/Public/FoliageType.h"
-#include "MessageDialog.h"
+#include "Runtime/Core/Public/Misc/MessageDialog.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/SkeletalMesh.h"
 #include "Slate/SceneViewport.h"
 #include "IImageWrapper.h"
-#include "ObjectThumbnail.h"
+#include "Runtime/Core/Public/Misc/ObjectThumbnail.h"
 #include "Engine/Engine.h"
 #include "ProceduralMeshComponent.h"
 #include <exception>
@@ -304,18 +304,16 @@ std::string UAirBlueprintLib::GetMeshName(UProceduralMeshComponent* meshComponen
 
 void UAirBlueprintLib::InitializeMeshStencilIDs(bool ignore_existing)
 {
+    int i = 0;
     for (TObjectIterator<UMeshComponent> comp; comp; ++comp)
     {
+        i++;
         InitializeObjectStencilID(*comp, ignore_existing);
     }
     for (TObjectIterator<USkinnedMeshComponent> comp; comp; ++comp)
     {
         InitializeObjectStencilID(*comp, ignore_existing);
     }
-    //for (TObjectIterator<UFoliageType> comp; comp; ++comp)
-    //{
-    //    InitializeObjectStencilID(*comp);
-    //}
     for (TObjectIterator<ALandscapeProxy> comp; comp; ++comp)
     {
         InitializeObjectStencilID(*comp, ignore_existing);

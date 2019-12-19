@@ -16,6 +16,7 @@
 #include "Kismet/KismetStringLibrary.h"
 #include "Engine/World.h"
 #include "ProceduralMeshComponent.h"
+#include "Runtime/Foliage/Public/FoliageType.h"
 
 #include "Runtime/Landscape/Classes/LandscapeComponent.h"
 #include "common/AirSimSettings.hpp"
@@ -97,7 +98,17 @@ public:
         {
         case msr::airlib::AirSimSettings::SegmentationSetting::MeshNamingMethodType::OwnerName:
             if (mesh->GetOwner())
+            {
+                // For foliage actors, need to use mesh's name in order to differentiate different meshes from each other.
+                // Otherwise, all items placed with the foliage actor will get the same ID.
+                auto owner = mesh->GetOwner();
+                if (owner->GetName().StartsWith("InstancedFoliageActor"))
+                {
+                    return std::string(TCHAR_TO_UTF8(*(mesh->GetName())));
+                }
+
                 return std::string(TCHAR_TO_UTF8(*(mesh->GetOwner()->GetName())));
+            }
             else
                 return ""; //std::string(TCHAR_TO_UTF8(*(UKismetSystemLibrary::GetDisplayName(mesh))));
         case msr::airlib::AirSimSettings::SegmentationSetting::MeshNamingMethodType::StaticMeshName:
@@ -205,6 +216,11 @@ private:
         }
     }
 
+    static void InitializeFoliageStencilID(UFoliageType* mesh, int vv, bool ignore_existing = true)
+    {
+        mesh->bRenderCustomDepth = true;
+        mesh->CustomDepthStencilValue = vv;
+    }
 
     template<typename T>
     static void SetObjectStencilIDIfMatch(T* mesh, int object_id,

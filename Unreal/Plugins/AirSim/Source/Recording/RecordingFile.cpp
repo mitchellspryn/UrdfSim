@@ -1,6 +1,6 @@
 #include "RecordingFile.h"
 #include "HAL/PlatformFilemanager.h"
-#include "FileHelper.h"
+#include "Runtime/Core/Public/HAL/FileManager.h"
 #include <sstream>
 #include "ImageUtils.h"
 #include "common/ClockFactory.hpp"

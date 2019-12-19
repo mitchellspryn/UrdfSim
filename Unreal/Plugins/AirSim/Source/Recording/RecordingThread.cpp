@@ -1,5 +1,5 @@
 #include "RecordingThread.h"
-#include "TaskGraphInterfaces.h"
+#include "Runtime/Core/Public/Async/TaskGraphInterfaces.h"
 #include "HAL/RunnableThread.h"
 
 #include <thread>
