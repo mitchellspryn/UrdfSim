@@ -285,7 +285,7 @@ public:
         );
     }
 
-    static GeoPoint nedToGeodetic(const Vector3r& v, const HomeGeoPoint& home_geo_point)
+    static GeoPoint nedToGeodetic(const Vector3r& v, const HomeGeoPoint& home_geo_point, const bool reverse_z = false)
     {
         double x_rad = v.x() / EARTH_RADIUS;
         double y_rad = v.y() / EARTH_RADIUS;
@@ -298,9 +298,10 @@ public:
                 atan2(y_rad * sin_c, c * home_geo_point.cos_lat * cos_c - x_rad * home_geo_point.sin_lat * sin_c));
 
             return GeoPoint(Utils::radiansToDegrees(lat_rad), Utils::radiansToDegrees(lon_rad), 
-                home_geo_point.home_geo_point.altitude - v.z());
+                (reverse_z ? v.z() - home_geo_point.home_geo_point.altitude : home_geo_point.home_geo_point.altitude - v.z()));
         } else
-            return GeoPoint(home_geo_point.home_geo_point.latitude, home_geo_point.home_geo_point.longitude, home_geo_point.home_geo_point.altitude - v.z());
+            return GeoPoint(home_geo_point.home_geo_point.latitude, home_geo_point.home_geo_point.longitude, 
+                (reverse_z ? v.z() - home_geo_point.home_geo_point.altitude : home_geo_point.home_geo_point.altitude - v.z()));
     }
 
     //below are approximate versions and would produce errors of more than 10m for points farther than 1km

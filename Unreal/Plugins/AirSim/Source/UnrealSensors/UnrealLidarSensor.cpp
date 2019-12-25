@@ -6,6 +6,7 @@
 #include "common/Common.hpp"
 #include "NedTransform.h"
 #include "DrawDebugHelpers.h"
+#include "Vehicles/UrdfBot/UrdfLink.h"
 
 // ctor
 UnrealLidarSensor::UnrealLidarSensor(const AirSimSettings::LidarSetting& setting,
@@ -18,6 +19,25 @@ UnrealLidarSensor::UnrealLidarSensor(const AirSimSettings::LidarSetting& setting
 
     this->ignore_pawn_collision_ = params.ignore_pawn_collision;
     this->draw_debug_points_ = params.draw_debug_points;
+    this->ignore_collision_actors_ = TArray<const AActor*>();
+
+    // This is a bit of a hack
+    // The problem is that for URDF bot, we oftentimes want to spawn the lidar inside geometry
+    //   (for example, the LIDAR is usually enclosed inside a plastic case, which is represented by static geometry.)
+    // In this case, we want to ignore collision with both the case it's involved in, and with the enclosing "UrdfBot" component. 
+    // We want to maintain collision with other parts of the bot, e.g. an arm if the bot is mounted on the  base. 
+    // 
+    // This solution creates a bit of a coupling between the UrdfBot and the Lidar.
+    // Ideally, there should be some sort of "GetGroupedCollisionComponents", but that seems like overkill. 
+    if (this->ignore_pawn_collision_)
+    {
+        AUrdfLink* link = dynamic_cast<AUrdfLink*>(this->actor_);
+        if (link != nullptr)
+        {
+            AActor* owner = static_cast<AActor*>(link->GetOwningActor());
+            this->ignore_collision_actors_.Add(owner);
+        }
+    }
 }
 
 // initializes information based on lidar configuration
@@ -190,7 +210,7 @@ bool UnrealLidarSensor::shootLaser(const msr::airlib::Pose& lidar_pose, const ms
 
     FVector shootVec = endVec - startVec;
 
-    bool is_hit = UAirBlueprintLib::GetObstacle(actor_, startVec, endVec, hit_result, TArray<const AActor*>(), ECC_Visibility, this->ignore_pawn_collision_);
+    bool is_hit = UAirBlueprintLib::GetObstacle(actor_, startVec, endVec, hit_result, this->ignore_collision_actors_, ECC_Visibility, this->ignore_pawn_collision_);
 
     if (is_hit)
     {

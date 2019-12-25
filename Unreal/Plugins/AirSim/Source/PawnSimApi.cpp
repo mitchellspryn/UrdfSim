@@ -58,9 +58,18 @@ void PawnSimApi::setStartPosition(const FVector& position, const FRotator& rotat
     initial_state_.last_debug_position = initial_state_.start_location;
 
     //compute our home point
+    // Flip z if sim mode name == "UrdfBot"
+    this->flip_z_for_gps_ = (AirSimSettings::singleton().simmode_name == "UrdfBot");
     Vector3r nedWrtOrigin = ned_transform_.toGlobalNed(initial_state_.start_location);
+
+    if (this->flip_z_for_gps_)
+    {
+        nedWrtOrigin = Vector3r(nedWrtOrigin.x(), nedWrtOrigin.y(), -1 * nedWrtOrigin.z());
+    }
+
     home_geo_point_ = msr::airlib::EarthUtils::nedToGeodetic(nedWrtOrigin,
-        AirSimSettings::singleton().origin_geopoint);
+        AirSimSettings::singleton().origin_geopoint,
+        this->flip_z_for_gps_);
 }
 
 void PawnSimApi::pawnTick(float dt)
@@ -68,8 +77,13 @@ void PawnSimApi::pawnTick(float dt)
     update();
     updateRenderedState(dt);
     updateRendering(dt);
-    drawDrawShapes();
     serviceMoveCameraRequests();
+
+    if (this->should_refresh_drawable_shapes_)
+    {
+        drawDrawShapes();
+        this->should_refresh_drawable_shapes_ = false;
+    }
 }
 
 void PawnSimApi::detectUsbRc()
@@ -590,13 +604,21 @@ msr::airlib::RayCastResponse PawnSimApi::rayCast(const msr::airlib::RayCastReque
 //parameters in NED frame
 PawnSimApi::Pose PawnSimApi::getPose() const
 {
-    return toPose(getUUPosition(), getUUOrientation().Quaternion());
+    //kinematics_.twist.linear = msr::airlib::Vector3r(nedTransform.fromNed(velocity.X), nedTransform.fromNed(velocity.Y), nedTransform.fromNed(velocity.Z));
+    auto nedTransform = getNedTransform();
+    FVector position = getUUPosition();
+    FVector position_scaled(nedTransform.toNed(position.X), nedTransform.toNed(position.Y), nedTransform.toNed(position.Z));
+    return toPose(position_scaled, getUUOrientation().Quaternion());
 }
 
 PawnSimApi::Pose PawnSimApi::toPose(const FVector& u_position, const FQuat& u_quat) const
 {
-    const Vector3r& position = ned_transform_.toLocalNed(u_position);
-    const Quaternionr& orientation = ned_transform_.toNed(u_quat);
+    //const Vector3r& position = ned_transform_.toLocalNed(u_position);
+    //const Quaternionr& orientation = ned_transform_.toNed(u_quat);
+    
+    Vector3r position(u_position.X, u_position.Y, u_position.Z);
+    Quaternionr orientation(u_quat.W, u_quat.X, u_quat.Y, u_quat.Z);
+
     return Pose(position, orientation);
 }
 
@@ -605,6 +627,21 @@ void PawnSimApi::setPose(const Pose& pose, bool ignore_collision)
     UAirBlueprintLib::RunCommandOnGameThread([this, pose, ignore_collision]() {
         setPoseInternal(pose, ignore_collision);
     }, true);
+}
+
+std::vector<msr::airlib::GeoPoint> PawnSimApi::xyzToGeoPoints(const std::vector<msr::airlib::Vector3r>& xyz_points)
+{
+    std::vector<msr::airlib::GeoPoint> result;
+    result.reserve(xyz_points.size());
+
+    for (const auto &point : xyz_points)
+    {
+        result.emplace_back(
+            msr::airlib::EarthUtils::nedToGeodetic(point, this->home_geo_point_, this->flip_z_for_gps_)
+        );
+    }
+
+    return result;
 }
 
 void PawnSimApi::setPoseInternal(const Pose& pose, bool ignore_collision)
@@ -674,7 +711,10 @@ void PawnSimApi::updateKinematics(float dt)
 
     kinematics_.pose = getPose();
 
-    kinematics_.twist.linear = getNedTransform().toLocalNed(getPawn()->GetVelocity());
+    //kinematics_.twist.linear = getNedTransform().toLocalNed(getPawn()->GetVelocity());
+    auto nedTransform = getNedTransform();
+    auto velocity = getPawn()->GetVelocity();
+    kinematics_.twist.linear = msr::airlib::Vector3r(nedTransform.toNed(velocity.X), nedTransform.toNed(velocity.Y), nedTransform.toNed(velocity.Z));
     kinematics_.twist.angular = msr::airlib::VectorMath::toAngularVelocity(
         kinematics_.pose.orientation, last_kinematics.pose.orientation, dt);
 
@@ -751,11 +791,15 @@ void PawnSimApi::setDrawShapes(std::unordered_map<std::string, msr::airlib::Draw
     {
         this->drawable_shapes_ = drawableShapes;
     }
+
+    this->should_refresh_drawable_shapes_ = true;
 }
 
 void PawnSimApi::drawDrawShapes()
 {
-    bool persistant = false;
+    FlushPersistentDebugLines(getPawn()->GetWorld());
+
+    bool persistant = true;
     float persistSeconds = -1;
     uint8 priority = (uint8)'\002';
 

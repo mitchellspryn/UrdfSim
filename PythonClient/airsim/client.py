@@ -145,6 +145,9 @@ class VehicleClient:
     def simGetCollisionInfo(self, vehicle_name = ''):
         return CollisionInfo.from_msgpack(self.client.call('simGetCollisionInfo', vehicle_name))
 
+    def simXyzToGeoPoints(self, geo_points, vehicle_name = ''):
+        return self.client.call('simXyzToGeoPoints', geo_points, vehicle_name)
+
     def simSetVehiclePose(self, pose, ignore_collison, vehicle_name = ''):
         self.client.call('simSetVehiclePose', pose, ignore_collison, vehicle_name)
     def simGetVehiclePose(self, vehicle_name = ''):

@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>e2049e20-b6dd-474e-8bca-1c8dc54725aa</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>urdfbot\QuickTest.py</StartupFile>
+    <StartupFile>urdfbot\ShapeDrawTest.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -123,10 +123,10 @@
     <Compile Include="urdfbot\BoxAndCylinderNonInteractiveTest.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="urdfbot\QuickTest.py">
+    <Compile Include="urdfbot\ClientUtil.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="urdfbot\ClientUtil.py">
+    <Compile Include="urdfbot\GpsTest.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="urdfbot\LunabotClient.py">

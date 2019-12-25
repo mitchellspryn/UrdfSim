@@ -77,6 +77,7 @@ public: //implementation of VehicleSimApiBase
     virtual void setCameraPose(const msr::airlib::CameraPose camera_pose);
     virtual Pose getPose() const override;
     virtual void setPose(const Pose& pose, bool ignore_collision) override;
+    virtual std::vector<GeoPoint> xyzToGeoPoints(const std::vector<Vector3r>& xyz) override;
     virtual msr::airlib::CameraInfo getCameraInfo(const std::string& camera_name) const override;
     virtual void setCameraOrientation(const std::string& camera_name, const Quaternionr& orientation) override;
     virtual msr::airlib::RayCastResponse rayCast(const msr::airlib::RayCastRequest& request) override;
@@ -163,6 +164,8 @@ private: //vars
     std::unique_ptr<UnrealImageCapture> image_capture_;
     std::string log_line_;
 
+    bool flip_z_for_gps_;
+
     mutable msr::airlib::RCData rc_data_;
     mutable SimJoyStick joystick_;
     mutable SimJoyStick::State joystick_state_;
@@ -201,4 +204,6 @@ private: //vars
     std::unique_ptr<msr::airlib::Environment> environment_;
 
     std::unordered_map<std::string, msr::airlib::DrawableShape> drawable_shapes_;
+
+    bool should_refresh_drawable_shapes_ = false;
 };

@@ -127,6 +127,29 @@ RpcLibServerBase::RpcLibServerBase(ApiProvider* api_provider, const std::string&
     });
 
     pimpl_->server.
+        bind("simXyzToGeoPoints", [&](const std::vector<RpcLibAdapatorsBase::Vector3r> &xyz_points, const std::string vehicle_name) -> std::vector<RpcLibAdapatorsBase::GeoPoint> {
+
+        //TODO: this is a lot of copying...
+        std::vector<msr::airlib::Vector3r> xyz_points_converted;
+        xyz_points_converted.reserve(xyz_points.size());
+        for (const auto &point : xyz_points)
+        {
+            xyz_points_converted.emplace_back(point.to());
+        }
+
+        std::vector<msr::airlib::GeoPoint> result_points = getVehicleSimApi(vehicle_name)->xyzToGeoPoints(xyz_points_converted);
+
+        std::vector<RpcLibAdapatorsBase::GeoPoint> output;
+        output.reserve(result_points.size());
+        for (const auto &point : result_points)
+        {
+            output.emplace_back(RpcLibAdapatorsBase::GeoPoint(point));
+        }
+
+        return output;
+    });
+
+    pimpl_->server.
         bind("simSetSegmentationObjectID", [&](const std::string& mesh_name, int object_id, bool is_name_regex) -> bool {
         return getWorldSimApi()->setSegmentationObjectID(mesh_name, object_id, is_name_regex);
     });

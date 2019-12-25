@@ -85,6 +85,7 @@ class AUrdfLink : public AActor
         void ComputeForces(float deltaTime, bool inSubstep);
 
         void SetOwningActor(AUrdfBotPawn* owner);
+        AUrdfBotPawn* GetOwningActor();
 
         void UpdateKinematics(float dt);
         msr::airlib::Pose GetPose();

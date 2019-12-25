@@ -189,6 +189,11 @@ void AUrdfLink::SetOwningActor(AUrdfBotPawn* owner)
     this->owner_ = owner;
 }
 
+AUrdfBotPawn* AUrdfLink::GetOwningActor()
+{
+    return this->owner_;
+}
+
 TMap<FString, UrdfForceSpecification*> AUrdfLink::GetForceSpecifications() const
 {
     return this->forceSpecifications_;

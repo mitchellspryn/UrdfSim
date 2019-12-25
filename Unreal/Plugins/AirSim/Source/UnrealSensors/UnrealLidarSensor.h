@@ -35,6 +35,7 @@ private:
     AActor* actor_;
     const NedTransform* ned_transform_;
 
+    TArray<const AActor*> ignore_collision_actors_;
     msr::airlib::vector<msr::airlib::real_T> laser_angles_;
     float current_horizontal_angle_ = 0.0f;
     bool ignore_pawn_collision_;

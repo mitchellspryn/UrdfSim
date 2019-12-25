@@ -189,6 +189,28 @@ void RpcLibClientBase::simSetVehiclePose(const Pose& pose, bool ignore_collision
     pimpl_->client.call("simSetVehiclePose", RpcLibAdapatorsBase::Pose(pose), ignore_collision, vehicle_name);
 }
 
+vector<msr::airlib::GeoPoint> RpcLibClientBase::xyzToGeoPoints(const vector<msr::airlib::Vector3r> &xyz_points, const std::string& vehicle_name)
+{
+    // TODO: a lot of copying...
+    vector<RpcLibAdapatorsBase::Vector3r> input;
+    input.reserve(xyz_points.size());
+    for (const auto &point : xyz_points)
+    {
+        input.emplace_back(RpcLibAdapatorsBase::Vector3r(point));
+    }
+
+    vector<RpcLibAdapatorsBase::GeoPoint> result = pimpl_->client.call("simXyzToGeoPoints", input, vehicle_name).as<vector<RpcLibAdapatorsBase::GeoPoint>>();
+
+    vector<msr::airlib::GeoPoint> output;
+    output.reserve(result.size());
+    for (const auto &point : result)
+    {
+        output.emplace_back(point.to());
+    }
+    
+    return output;
+}
+
 vector<ImageCaptureBase::ImageResponse> RpcLibClientBase::simGetImages(vector<ImageCaptureBase::ImageRequest> request, const std::string& vehicle_name)
 {
     const auto& response_adaptor = pimpl_->client.call("simGetImages", 

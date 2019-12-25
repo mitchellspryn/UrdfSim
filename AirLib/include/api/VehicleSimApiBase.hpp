@@ -54,6 +54,7 @@ public:
 
     virtual Pose getPose() const = 0;
     virtual void setPose(const Pose& pose, bool ignore_collision) = 0;
+    virtual std::vector<GeoPoint> xyzToGeoPoints(const std::vector<Vector3r>& xyz_points) = 0;
     virtual const Kinematics::State* getGroundTruthKinematics() const = 0;
     virtual const msr::airlib::Environment* getGroundTruthEnvironment() const = 0;
 

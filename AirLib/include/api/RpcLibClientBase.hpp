@@ -73,6 +73,8 @@ public:
     Pose simGetVehiclePose(const std::string& vehicle_name = "") const;
     void simSetVehiclePose(const Pose& pose, bool ignore_collision, const std::string& vehicle_name = "");
 
+    vector<msr::airlib::GeoPoint> xyzToGeoPoints(const vector<msr::airlib::Vector3r> &xyz_points, const std::string& vehicle_name = "");
+
     vector<ImageCaptureBase::ImageResponse> simGetImages(vector<ImageCaptureBase::ImageRequest> request, const std::string& vehicle_name = "");
     vector<uint8_t> simGetImage(const std::string& camera_name, ImageCaptureBase::ImageType type, const std::string& vehicle_name = "");
     void simSetCameraPose(const CameraPose camera_pose, const std::string& vehicle_name = "");
