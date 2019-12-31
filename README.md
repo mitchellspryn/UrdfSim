@@ -9,6 +9,10 @@ Here are some examples of bots that can be built inside of AirSim-URDF:
 ![LunabotPicture](docs/images/Lunabot.gif)
 ![ArmPicture](docs/images/Arm.gif)
 
+If you're looking for binaries with this extension baked in, consider downloading one of the [annotated maps](https://github.com/mitchellspryn/AnnotatedUnrealMaps)
+
+If you're looking for an example of an application of this project to a real problem, consider looking at the [robomagellan orchestrator](https://github.com/mitchellspryn/RoboMagellanOrchestrator), which uses UrdfSim to simulate a run of the [Seattle Robotics Society's RoboMagellan competition](https://robothon.org/rules-robo-magellan/). 
+
 ## How to Get It
 
 ### Windows
