@@ -40,12 +40,14 @@ public:
         values["Mag-Vec-x"] = output.magnetic_field_body.x();
         values["Mag-Vec-y"] = output.magnetic_field_body.y();
         values["Mag-Vec-z"] = output.magnetic_field_body.z();
-        values["Mag-Vec-Cov-x-x"] = output.magnetic_field_covariance[0];
-        values["Mag-Vec-Cov-x-y"] = output.magnetic_field_covariance[1];
-        values["Mag-Vec-Cov-x-z"] = output.magnetic_field_covariance[2];
-        values["Mag-Vec-Cov-y-y"] = output.magnetic_field_covariance[4];
-        values["Mag-Vec-Cov-y-z"] = output.magnetic_field_covariance[5];
-        values["Mag-Vec-Cov-z-z"] = output.magnetic_field_covariance[8];
+
+        // TODO: reinstate when needed.
+        // values["Mag-Vec-Cov-x-x"] = output.magnetic_field_covariance[0];
+        // values["Mag-Vec-Cov-x-y"] = output.magnetic_field_covariance[1];
+        // values["Mag-Vec-Cov-x-z"] = output.magnetic_field_covariance[2];
+        // values["Mag-Vec-Cov-y-y"] = output.magnetic_field_covariance[4];
+        // values["Mag-Vec-Cov-y-z"] = output.magnetic_field_covariance[5];
+        // values["Mag-Vec-Cov-z-z"] = output.magnetic_field_covariance[8];
 
         return values;
     }

@@ -31,7 +31,7 @@ struct LidarSimpleParams {
     bool draw_debug_points = false;
     bool ignore_pawn_collision = true;
 
-    real_T update_frequency = 10;             // Hz
+    real_T update_frequency = 10;              // Hz
     real_T startup_delay = 0;                 // sec
 
     void initializeFromSettings(const AirSimSettings::LidarSetting& settings)
@@ -43,6 +43,7 @@ struct LidarSimpleParams {
         points_per_second = settings.points_per_second;
         horizontal_rotation_frequency = settings.horizontal_rotation_frequency;
         ignore_pawn_collision = settings.ignore_pawn_collision;
+        update_frequency = settings.update_frequency;
 
         // By default, for multirotors the lidars FOV point downwards;
         // for cars, the lidars FOV is more forward facing.

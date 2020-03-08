@@ -574,53 +574,55 @@ msr::airlib::VehicleApiBase* ASimModeBase::getVehicleApi(const PawnSimApi::Param
 // Used for debugging only.
 void ASimModeBase::drawLidarDebugPoints()
 {
-    // Currently we are checking the sensor-collection instead of sensor-settings.
-    // Also using variables to optimize not checking the collection if not needed.
-    if (lidar_checks_done_ && !lidar_draw_debug_points_)
-        return;
+    // This has been moved to the UnrealLidarSensor.
 
-    if (getApiProvider() == nullptr)
-        return;
+    //// Currently we are checking the sensor-collection instead of sensor-settings.
+    //// Also using variables to optimize not checking the collection if not needed.
+    //if (lidar_checks_done_ && !lidar_draw_debug_points_)
+    //    return;
 
-    for (auto& sim_api : getApiProvider()->getVehicleSimApis()) {
-        PawnSimApi* pawn_sim_api = static_cast<PawnSimApi*>(sim_api);
-        std::string vehicle_name = pawn_sim_api->getVehicleName();
+    //if (getApiProvider() == nullptr)
+    //    return;
 
-        msr::airlib::VehicleApiBase* api = getApiProvider()->getVehicleApi(vehicle_name);
-        if (api != nullptr) {
-            
-            msr::airlib::uint count_lidars = api->getSensors().size(msr::airlib::SensorBase::SensorType::Lidar);
+    //for (auto& sim_api : getApiProvider()->getVehicleSimApis()) {
+    //    PawnSimApi* pawn_sim_api = static_cast<PawnSimApi*>(sim_api);
+    //    std::string vehicle_name = pawn_sim_api->getVehicleName();
 
-            for (msr::airlib::uint i = 0; i < count_lidars; i++) {
-                // TODO: Is it incorrect to assume LidarSimple here?
-                const msr::airlib::LidarSimple* lidar =
-                    static_cast<const msr::airlib::LidarSimple*>(api->getSensors().getByType(msr::airlib::SensorBase::SensorType::Lidar, i));
-                if (lidar != nullptr && lidar->getParams().draw_debug_points) {
-                    lidar_draw_debug_points_ = true;
+    //    msr::airlib::VehicleApiBase* api = getApiProvider()->getVehicleApi(vehicle_name);
+    //    if (api != nullptr) {
+    //        
+    //        msr::airlib::uint count_lidars = api->getSensors().size(msr::airlib::SensorBase::SensorType::Lidar);
 
-                    msr::airlib::LidarData lidar_data = lidar->getOutput();
+    //        for (msr::airlib::uint i = 0; i < count_lidars; i++) {
+    //            // TODO: Is it incorrect to assume LidarSimple here?
+    //            const msr::airlib::LidarSimple* lidar =
+    //                static_cast<const msr::airlib::LidarSimple*>(api->getSensors().getByType(msr::airlib::SensorBase::SensorType::Lidar, i));
+    //            if (lidar != nullptr && lidar->getParams().draw_debug_points) {
+    //                lidar_draw_debug_points_ = true;
 
-                    if (lidar_data.point_cloud.size() < 3)
-                        return;
+    //                msr::airlib::LidarData lidar_data = lidar->getOutput();
 
-                    for (int i = 0; i < lidar_data.point_cloud.size(); i = i + 3) {
-                        msr::airlib::Vector3r point(lidar_data.point_cloud[i], lidar_data.point_cloud[i + 1], lidar_data.point_cloud[i + 2]);
+    //                if (lidar_data.point_cloud.size() < 3)
+    //                    return;
 
-                        FVector uu_point = pawn_sim_api->getNedTransform().fromLocalNed(point);
+    //                for (int i = 0; i < lidar_data.point_cloud.size(); i = i + 3) {
+    //                    msr::airlib::Vector3r point(lidar_data.point_cloud[i], lidar_data.point_cloud[i + 1], lidar_data.point_cloud[i + 2]);
 
-                        DrawDebugPoint(
-                            this->GetWorld(),
-                            uu_point,
-                            5,              //size
-                            FColor::Green,
-                            true,           //persistent (never goes away)
-                            0.1             //point leaves a trail on moving object
-                        );
-                    }
-                }
-            }
-        }
-    }
+    //                    FVector uu_point = pawn_sim_api->getNedTransform().fromLocalNed(point);
+
+    //                    DrawDebugPoint(
+    //                        this->GetWorld(),
+    //                        uu_point,
+    //                        5,              //size
+    //                        FColor::Green,
+    //                        true,           //persistent (never goes away)
+    //                        0.1             //point leaves a trail on moving object
+    //                    );
+    //                }
+    //            }
+    //        }
+    //    }
+    //}
 
     lidar_checks_done_ = true;
 }

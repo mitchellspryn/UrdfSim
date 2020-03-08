@@ -547,7 +547,10 @@ msr::airlib::RayCastResponse PawnSimApi::rayCast(const msr::airlib::RayCastReque
         if (isHit)
         {
             msr::airlib::RayCastHit hit;
-            hit.collided_actor_name = std::string(TCHAR_TO_UTF8(*hitResult.Actor.Get()->GetName()));
+            if (hitResult.Actor != nullptr)
+            {
+                hit.collided_actor_name = std::string(TCHAR_TO_UTF8(*hitResult.Actor.Get()->GetName()));
+            }
 
             // Translate hit back into local frame of link provided
             // If no link is provided, this is a noop

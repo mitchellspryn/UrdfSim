@@ -164,7 +164,7 @@ bool UnrealLidarSensor::shootLaser(const msr::airlib::Pose& lidar_pose, const ms
         endVec = rayRotator.RotateVector(endVec);
         endVec = poseRotator.RotateVector(endVec);
         endVec = actorRotator.RotateVector(endVec);
-        endVec = endVec * params.range + startVec;
+        endVec = (endVec * params.range) + startVec;
         end = msr::airlib::Vector3r(endVec.X, endVec.Y, endVec.Z);
     }
     else
@@ -197,9 +197,6 @@ bool UnrealLidarSensor::shootLaser(const msr::airlib::Pose& lidar_pose, const ms
         endVec = FVector(end.x(), end.y(), end.z());
     }
     
-    long val = std::round(fabs(horizontalAngle));
-    val = val % 360;
-   
     FHitResult hit_result = FHitResult(ForceInit);
 
     if (this->ned_transform_ != nullptr)
@@ -209,6 +206,13 @@ bool UnrealLidarSensor::shootLaser(const msr::airlib::Pose& lidar_pose, const ms
     }
 
     FVector shootVec = endVec - startVec;
+
+    double len = shootVec.Size();
+
+    if (len > 601 || len < 599)
+    {
+        int j = 0;
+    }
 
     bool is_hit = UAirBlueprintLib::GetObstacle(actor_, startVec, endVec, hit_result, this->ignore_collision_actors_, ECC_Visibility, this->ignore_pawn_collision_);
 
@@ -261,6 +265,14 @@ bool UnrealLidarSensor::shootLaser(const msr::airlib::Pose& lidar_pose, const ms
             );
         }
 
-        return false;
+        // Use end point as the result
+        FVector diffVec = endVec - startVec;
+        FVector inActor = actorRotator.UnrotateVector(diffVec);
+        FVector inPose = poseRotator.UnrotateVector(inActor);
+
+        point = msr::airlib::Vector3r(inPose.X, inPose.Y, inPose.Z);
+
+        return true;
+        // return false;
     }
 }

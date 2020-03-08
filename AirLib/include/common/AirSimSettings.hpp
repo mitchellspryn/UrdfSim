@@ -222,6 +222,7 @@ public: //types
         real_T range = 10000.0f / 100;                    // meters
         uint points_per_second = 100000;
         uint horizontal_rotation_frequency = 10;          // rotations/sec
+        uint update_frequency = 5;
 
         // defaults specific to a mode
         float vertical_FOV_upper = Utils::nan<float>();   // drones -15, car +10
@@ -1200,6 +1201,7 @@ private:
         lidar_setting.points_per_second = settings_json.getInt("PointsPerSecond", lidar_setting.points_per_second);
         lidar_setting.horizontal_rotation_frequency = settings_json.getInt("RotationsPerSecond", lidar_setting.horizontal_rotation_frequency);
         lidar_setting.draw_debug_points = settings_json.getBool("DrawDebugPoints", lidar_setting.draw_debug_points);
+        lidar_setting.update_frequency = settings_json.getInt("UpdateFrequency", lidar_setting.update_frequency);
 
         lidar_setting.vertical_FOV_upper = settings_json.getFloat("VerticalFOVUpper", lidar_setting.vertical_FOV_upper);
         lidar_setting.vertical_FOV_lower = settings_json.getFloat("VerticalFOVLower", lidar_setting.vertical_FOV_lower);
