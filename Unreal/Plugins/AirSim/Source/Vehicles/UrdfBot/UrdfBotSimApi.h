@@ -6,7 +6,7 @@
 #include "UrdfBotPawn.h"
 #include "UrdfBotApi.h"
 #include "AirBlueprintLib.h"
-#include "Airlib/include/physics/Kinematics.hpp"
+#include "AirLib/include/physics/Kinematics.hpp"
 #include "AirLib/include/vehicles/urdfbot/api/UrdfBotApiBase.hpp"
 #include "UnrealSensors/UnrealSensorFactory.h"
 

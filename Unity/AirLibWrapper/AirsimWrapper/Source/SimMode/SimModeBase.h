@@ -11,7 +11,7 @@
 
 class SimModeBase
 {
-private:
+protected:
 	typedef common_utils::Utils Utils;
 	typedef msr::airlib::ClockFactory ClockFactory;
 	typedef msr::airlib::TTimePoint TTimePoint;

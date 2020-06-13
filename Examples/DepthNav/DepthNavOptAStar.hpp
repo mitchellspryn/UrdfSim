@@ -42,6 +42,8 @@ public:
         real_T vfov, aspect;
         unsigned int env_x_oofset, env_y_oofset;
         real_T tan_hfov_by_2, tan_vfov_by_2;
+
+        Params(){}
     };
 
     class DepthNavException : public std::runtime_error {

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "sensors/imu/ImuSimple.hpp"
-#include "sensors/Barometer/BarometerSimple.hpp"
-#include "sensors/Magnetometer/MagnetometerSimple.hpp"
+#include "sensors/barometer/BarometerSimple.hpp"
+#include "sensors/magnetometer/MagnetometerSimple.hpp"
 #include "common/Common.hpp"
 #include <thread>
 #include <ostream>
