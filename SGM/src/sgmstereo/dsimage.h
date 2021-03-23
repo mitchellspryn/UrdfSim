@@ -14,6 +14,16 @@
 #include <string.h>
 #include <math.h>
 
+#ifdef __unix__
+#define __min fminf
+#define __max fmaxf
+
+inline void* _aligned_malloc(size_t size, size_t alignment)
+{
+    return aligned_alloc(alignment, size);
+}
+#endif // __unix__
+
 
 class DSI
 {
@@ -176,13 +186,17 @@ public:
 
 	~DSI()
 	{
-		free();
+		freeMem();
 	}
 
-	void free()
+	void freeMem()
 	{
 		if (m_data != NULL)
+#ifdef __unix__
+            free(m_data);
+#else
 			_aligned_free(m_data);
+#endif // __unix__
 		m_data = NULL;
 	}
 

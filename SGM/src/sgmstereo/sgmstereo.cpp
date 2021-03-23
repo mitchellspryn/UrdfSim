@@ -52,7 +52,6 @@ SGMStereo::SGMStereo(int _w, int _h, int minDisparity, int maxDisparity, int num
 	}
 
 	float rec_penalty2 = 1.0f / m_penalty2;
-	wLUT = new float[256];
 	for (int i = 0; i < 256; i++)
 	{
 		wLUT[i] = m_penalty1 + m_alpha * exp(-i * rec_penalty2);
@@ -377,7 +376,11 @@ void SGMStereo::scanlineOptimization(DSI &dv, DSI &msgs, unsigned char* img, flo
 		dy*=-1;
 	}
 
+#ifdef __unix__
+    free(buffervec);
+#else
 	_aligned_free(buffervec);
+#endif // __unix__
 }
 
 
@@ -415,7 +418,11 @@ void SGMStereo::scanlineOptimization_hor(DSI &dv, DSI &msgs, unsigned char *img,
 			messagePassing(dv(x, y), buf, msgs(x, y), planes, weight, smoothness);
 		}
 	}
+#ifdef __unix__
+    free(buf);
+#else
 	_aligned_free(buf);
+#endif // __unix__
 }
 
 void SGMStereo::scanlineOptimization_vert(DSI &dv, DSI &msgs, unsigned char *img, float *lut)
@@ -454,7 +461,11 @@ void SGMStereo::scanlineOptimization_vert(DSI &dv, DSI &msgs, unsigned char *img
 			offset -= cols;
 		}
 	}
+#ifdef __unix__
+    free(buf);
+#else
 	_aligned_free(buf);
+#endif // __unix__
 }
 
 
@@ -496,21 +507,19 @@ void SGMStereo::Run(
 }
 
 
-void SGMStereo::free()
+void SGMStereo::freeMem()
 {
-	m_dsi.free();
+	m_dsi.freeMem();
 	
 	if (m_doSequential)
 	{
-		messages.free();
+		messages.freeMem();
 	}
 	else
 	{
-		messages_hor.free();
-		messages_ver.free();
+		messages_hor.freeMem();
+		messages_ver.freeMem();
 	}
-
-	delete[] wLUT;
 }
 
 

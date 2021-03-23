@@ -21,7 +21,7 @@ private:
 
 	DSI messages_hor, messages_ver;
 
-	float * wLUT;
+	float wLUT[256];
 
 	int m_w, m_h;
 
@@ -46,6 +46,6 @@ public:
 
 	void Run(unsigned char * iLeft, unsigned char * iRight, float* dispMap, unsigned char* confMap);
 
-	void free();
+	void freeMem();
 };
 #endif

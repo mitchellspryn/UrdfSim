@@ -282,6 +282,8 @@ void AUrdfBotPawn::GetComponentReferenceTransform(FString componentName, FVector
 
 void AUrdfBotPawn::ConstructFromFile(FString fileName)
 {
+    FVector actorLocation  = GetActorLocation();
+    FRotator actorRotation = GetActorRotation();
     this->components_.Empty();
     this->component_visited_as_constraint_parent_.Empty();
     this->constraints_.Empty();
@@ -306,15 +308,16 @@ void AUrdfBotPawn::ConstructFromFile(FString fileName)
 
     UrdfLinkSpecification* rootLinkSpecification = this->FindRootNodeSpecification(links);
     this->root_component_ = this->components_[rootLinkSpecification->Name];
-    this->root_component_->SetReferenceFrameLocation(this->GetActorLocation(), this->GetActorRotation());
-    this->root_component_->GetRootComponent()->AttachTo(RootComponent, NAME_None, EAttachLocation::KeepRelativeOffset); 
+    this->root_component_->SetReferenceFrameLocation(actorLocation, actorRotation);
+    this->root_component_->GetRootComponent()->AttachToComponent(RootComponent, FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), NAME_None);
+    this->root_component_->GetRootMesh()->SetSimulatePhysics(true);
 
     this->SetRootComponent(this->root_component_->GetRootComponent());
 
     UPrimitiveComponent* rootCollisionComponent = this->root_component_->GetCollisionComponent();
     if (rootCollisionComponent != nullptr)
     {
-        rootCollisionComponent->SetWorldLocationAndRotation(this->GetActorLocation(), this->GetActorRotation());
+        rootCollisionComponent->SetWorldLocationAndRotation(actorLocation, actorRotation);
     }
 
     this->component_visited_as_constraint_parent_[rootLinkSpecification->Name] = true;
@@ -527,12 +530,12 @@ FConstraintInstance AUrdfBotPawn::CreateConstraint(const UrdfJointSpecification 
         constraintInstance.SetAngularTwistLimit(EAngularConstraintMotion::ACM_Limited, range);
         if (jointSpecification.Limit != nullptr && jointSpecification.Limit->Effort > 0)
         {
-            constraintInstance.SetAngularPositionDrive(false, true);
+            constraintInstance.SetOrientationDriveTwistAndSwing(true, false);
             constraintInstance.SetAngularDriveParams(jointSpecification.Limit->Effort * this->world_scale_ * this->world_scale_, 5.0f, jointSpecification.Limit->Effort * this->world_scale_ * this->world_scale_);
         }
         else
         {
-            constraintInstance.SetAngularPositionDrive(false, false);
+            constraintInstance.SetOrientationDriveTwistAndSwing(false, false);
             constraintInstance.SetAngularDriveParams(0, 0, 0);
         }
         break;
@@ -540,12 +543,12 @@ FConstraintInstance AUrdfBotPawn::CreateConstraint(const UrdfJointSpecification 
         constraintInstance.SetAngularTwistLimit(EAngularConstraintMotion::ACM_Free, 0.0f);
         if (jointSpecification.Limit != nullptr && jointSpecification.Limit->Effort > 0)
         {
-            constraintInstance.SetAngularVelocityDrive(false, true);
+            constraintInstance.SetAngularVelocityDriveTwistAndSwing(true, false);
             constraintInstance.SetAngularDriveParams(5.0f, jointSpecification.Limit->Effort * this->world_scale_ * this->world_scale_, jointSpecification.Limit->Effort * this->world_scale_ * this->world_scale_);
         }
         else
         {
-            constraintInstance.SetAngularVelocityDrive(false, false);
+            constraintInstance.SetAngularVelocityDriveTwistAndSwing(false, false);
             constraintInstance.SetAngularDriveParams(0, 0, 0);
         }
         break;

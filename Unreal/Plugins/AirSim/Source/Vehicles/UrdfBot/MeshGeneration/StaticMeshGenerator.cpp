@@ -183,6 +183,7 @@ bool StaticMeshGenerator::CreateUnscaledMeshForLink(FString linkName, FString li
 
 TArray<TArray<FVector>> StaticMeshGenerator::CreateCollisionVAHCD(TArray<FVector> stlPoints, TArray<uint32> stlIndices, double concavity, unsigned int resolution, unsigned int maxNumVerticiesPerCH, double minVolumePerCh)
 {
+    TArray<TArray<FVector> > output;
     VHACD::IVHACD* vhacdInterface = VHACD::CreateVHACD();
 
     VHACD::IVHACD::Parameters VHACD_Params;
@@ -213,40 +214,33 @@ TArray<TArray<FVector>> StaticMeshGenerator::CreateCollisionVAHCD(TArray<FVector
     bool success = vhacdInterface->Compute(verts, numVerts, tris, numTris, VHACD_Params);
     //bool success = vhacdInterface->Compute(verts, 3, numVerts, tris, 3, numTris, VHACD_Params);
 
-    if (!success)
+    if (success)
     {
-        vhacdInterface->Clean();
-        vhacdInterface->Release();
-        delete verts;
-        return TArray<TArray<FVector>>();
-    }
+        FVector V;
+        int32 numHulls = vhacdInterface->GetNConvexHulls();
 
-    int32 numHulls = vhacdInterface->GetNConvexHulls();
-
-    TArray<TArray<FVector>> output;
-    for (int32 hullIdx = 0; hullIdx < numHulls; hullIdx++)
-    {
-        TArray<FVector> thisHull;
-        VHACD::IVHACD::ConvexHull hull;
-        vhacdInterface->GetConvexHull(hullIdx, hull);
-
-        for (uint32 vertIdx = 0; vertIdx < hull.m_nPoints; vertIdx++)
+        for (int32 hullIdx = 0; hullIdx < numHulls; hullIdx++)
         {
-            FVector V;
+            TArray<FVector> thisHull;
+            VHACD::IVHACD::ConvexHull hull;
+            vhacdInterface->GetConvexHull(hullIdx, hull);
 
-            V.X = (float)(hull.m_points[(vertIdx * 3) + 0]);
-            V.Y = (float)(hull.m_points[(vertIdx * 3) + 1]);
-            V.Z = (float)(hull.m_points[(vertIdx * 3) + 2]);
+            for (uint32 vertIdx = 0; vertIdx < hull.m_nPoints; vertIdx++)
+            {
+                V.X = (float)(hull.m_points[(vertIdx * 3) + 0]);
+                V.Y = (float)(hull.m_points[(vertIdx * 3) + 1]);
+                V.Z = (float)(hull.m_points[(vertIdx * 3) + 2]);
 
-            thisHull.Add(V);
+                thisHull.Add(V);
+            }
+
+            output.Add(thisHull);
         }
-
-        output.Add(thisHull);
     }
 
     vhacdInterface->Clean();
     vhacdInterface->Release();
-    delete verts;
+    delete[] verts;
 
     return output;
 }

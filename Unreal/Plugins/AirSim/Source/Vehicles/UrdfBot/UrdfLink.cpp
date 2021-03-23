@@ -169,7 +169,7 @@ void AUrdfLink::ComputeForces(float deltaTime, bool inSubstep)
                 angularForce = static_cast<UrdfAngularForceSpecification*>(force);
                 thisRotation = this->RootComponent->GetComponentRotation();
                 worldAxis = thisRotation.RotateVector(angularForce->Axis);
-                this->mesh_root_->AddTorque(angularForce->Magnitude * worldAxis * this->SiTorqueToUU_);
+                this->mesh_root_->AddTorqueInRadians(angularForce->Magnitude * worldAxis * this->SiTorqueToUU_);
                 break;
             case FORCE_LINEAR:
                 linearForce = static_cast<UrdfLinearForceSpecification*>(force);
@@ -207,7 +207,7 @@ void AUrdfLink::ResetForceMagnitudes()
     }
 
     this->ComputeForces(0.0, false);
-    this->mesh_root_->SetPhysicsAngularVelocity(FVector::ZeroVector);
+    this->mesh_root_->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
     this->mesh_root_->SetPhysicsLinearVelocity(FVector::ZeroVector);
 }
 

@@ -67,7 +67,7 @@ void CStateStereo::CleanUp()
 {
 	if (sgmStereo != NULL)
 	{
-		sgmStereo->free();
+		sgmStereo->freeMem();
 	}
 }
 

@@ -51,6 +51,8 @@ public: //types
         real_T control_loop_period = 0.25f*max_allowed_obs_dist; //30.0f / 1000; //sec
         real_T max_linear_speed = 10; // m/s
         real_T max_angular_speed = 6; // rad/s
+
+        Params(){}
 	};
 
     class DepthNavException : public std::runtime_error {
